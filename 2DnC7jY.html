@@ -11,7 +11,6 @@
 <meta name="description" content="Интерактивная схема накопления Вайкоффа">
 <title>Схема накопления Вайкоффа</title>
 
-<!-- Inline SVG icon for apple-touch-icon -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22%3E%3Crect fill=%22%230d0d0f%22 width=%22180%22 height=%22180%22 rx=%2236%22/%3E%3Cpath d=%22M45 110 L75 70 L105 130 L135 90 L155 65%22 stroke=%22%233b82f6%22 stroke-width=%228%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%22150%22 cy=%2255%22 r=%2212%22 fill=%22%2322c55e%22/%3E%3Ctext x=%2290%22 y=%22155%22 text-anchor=%22middle%22 fill=%22%23f0f0f5%22 font-size=%2232%22 font-family=%22sans-serif%22 font-weight=%22600%22%3EW%3C/text%3E%3C/svg%3E">
 
 <style>
@@ -24,17 +23,17 @@
   --text-secondary: #a0a0b0;
   --text-tertiary: #6e6e7e;
   --accent: #3b82f6;
-  --accent-soft: rgba(59,130,246,0.12);
+  --accent-soft: rgba(59,130,246,0.20);
   --positive: #22c55e;
-  --positive-soft: rgba(34,197,94,0.12);
+  --positive-soft: rgba(34,197,94,0.20);
   --danger: #ef4444;
-  --danger-soft: rgba(239,68,68,0.12);
+  --danger-soft: rgba(239,68,68,0.20);
   --warning: #f59e0b;
-  --warning-soft: rgba(245,158,11,0.12);
+  --warning-soft: rgba(245,158,11,0.20);
   --purple: #a855f7;
-  --purple-soft: rgba(168,85,247,0.12);
+  --purple-soft: rgba(168,85,247,0.20);
   --cyan: #06b6d4;
-  --cyan-soft: rgba(6,182,212,0.12);
+  --cyan-soft: rgba(6,182,212,0.20);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -84,9 +83,9 @@ header p {
   padding: 10px 16px;
   margin-bottom: 16px;
   background: var(--accent-soft);
-  border: 1px solid rgba(59,130,246,0.2);
+  border: 1px solid rgba(59,130,246,0.35);
   border-radius: var(--radius-md);
-  color: var(--accent);
+  color: #60a5fa;
   font-size: 13px;
   font-weight: 500;
 }
@@ -292,6 +291,7 @@ header p {
   .phase-tab { padding: 5px 8px; font-size: 11px; }
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -325,11 +325,12 @@ header p {
           <line x1="0" y1="300" x2="800" y2="300"/>
         </g>
 
-        <rect class="phase-rect" id="rectA" x="0" y="0" width="140" height="360" fill="rgba(59,130,246,0.06)" opacity="1"/>
-        <rect class="phase-rect" id="rectB" x="140" y="0" width="240" height="360" fill="rgba(6,182,212,0.06)" opacity="1"/>
-        <rect class="phase-rect" id="rectC" x="380" y="0" width="120" height="360" fill="rgba(168,85,247,0.06)" opacity="1"/>
-        <rect class="phase-rect" id="rectD" x="500" y="0" width="200" height="360" fill="rgba(245,158,11,0.06)" opacity="1"/>
-        <rect class="phase-rect" id="rectE" x="700" y="0" width="100" height="360" fill="rgba(34,197,94,0.06)" opacity="1"/>
+        <!-- Phase backgrounds — increased contrast -->
+        <rect class="phase-rect" id="rectA" x="0" y="0" width="140" height="360" fill="rgba(59,130,246,0.18)" stroke="rgba(59,130,246,0.45)" stroke-width="1" opacity="1"/>
+        <rect class="phase-rect" id="rectB" x="140" y="0" width="240" height="360" fill="rgba(6,182,212,0.18)" stroke="rgba(6,182,212,0.45)" stroke-width="1" opacity="1"/>
+        <rect class="phase-rect" id="rectC" x="380" y="0" width="120" height="360" fill="rgba(168,85,247,0.18)" stroke="rgba(168,85,247,0.45)" stroke-width="1" opacity="1"/>
+        <rect class="phase-rect" id="rectD" x="500" y="0" width="200" height="360" fill="rgba(245,158,11,0.18)" stroke="rgba(245,158,11,0.45)" stroke-width="1" opacity="1"/>
+        <rect class="phase-rect" id="rectE" x="700" y="0" width="100" height="360" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.45)" stroke-width="1" opacity="1"/>
 
         <g stroke="var(--border)" stroke-width="1" stroke-dasharray="5 4">
           <line x1="140" y1="0" x2="140" y2="360"/>
@@ -349,10 +350,10 @@ header p {
         <path id="pricePath" d="M 10,45 L 35,55 L 60,40 L 85,70 L 110,60 L 135,95 L 160,75 L 185,90 L 210,80 L 235,100 L 260,85 L 285,105 L 310,95 L 335,115 L 360,100 L 385,125 L 410,130 L 435,120 L 460,140 L 485,125 L 510,150 L 535,135 L 560,115 L 585,95 L 610,75 L 635,90 L 660,65 L 685,55 L 710,45 L 735,35 L 760,28 L 785,22"
               fill="none" stroke="var(--text-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
 
-        <rect x="130" y="145" width="600" height="28" fill="var(--positive-soft)" stroke="var(--positive)" stroke-width="1" rx="3" opacity="0.8"/>
+        <rect x="130" y="145" width="600" height="28" fill="var(--positive-soft)" stroke="var(--positive)" stroke-width="1" rx="3" opacity="0.9"/>
         <text x="430" y="164" text-anchor="middle" class="label-text" fill="var(--positive)">Support zone</text>
 
-        <rect x="130" y="78" width="600" height="28" fill="var(--danger-soft)" stroke="var(--danger)" stroke-width="1" rx="3" opacity="0.8"/>
+        <rect x="130" y="78" width="600" height="28" fill="var(--danger-soft)" stroke="var(--danger)" stroke-width="1" rx="3" opacity="0.9"/>
         <text x="430" y="97" text-anchor="middle" class="label-text" fill="var(--danger)">Resistance zone</text>
 
         <circle class="event-dot" id="dot-ps" cx="110" cy="60" r="5.5" fill="var(--accent)" stroke="var(--bg)" stroke-width="2.5" data-event="ps"/>
@@ -459,7 +460,16 @@ function showInfo(data, cx, cy) {
 
 function highlightPhase(phase) {
   Object.keys(phaseRects).forEach(p => {
-    phaseRects[p].setAttribute('opacity', phase === 'all' || phase === p ? '1' : '0.08');
+    if (phase === 'all') {
+      phaseRects[p].setAttribute('opacity', '1');
+      phaseRects[p].setAttribute('fill-opacity', '1');
+    } else if (phase === p) {
+      phaseRects[p].setAttribute('opacity', '1');
+      phaseRects[p].setAttribute('fill-opacity', '1');
+    } else {
+      phaseRects[p].setAttribute('opacity', '0.04');
+      phaseRects[p].setAttribute('fill-opacity', '0.3');
+    }
   });
 }
 
@@ -492,7 +502,7 @@ document.querySelector('.chart-svg').addEventListener('click', (e) => {
   }
 });
 
-// ===== PWA: Inline Service Worker via Blob =====
+// PWA: Inline Service Worker via Blob
 const swCode = `self.addEventListener('install', e => e.waitUntil(caches.open('wyckoff-v1').then(c => c.addAll(['./'])).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`;
@@ -502,7 +512,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
 }
 
-// ===== PWA: Inline Manifest via Blob =====
+// PWA: Inline Manifest via Blob
 const manifest = {
   name: 'Схема накопления Вайкоффа',
   short_name: 'Wyckoff',
@@ -525,7 +535,7 @@ manifestLink.rel = 'manifest';
 manifestLink.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(manifestLink);
 
-// ===== PWA: Install hint =====
+// PWA: Install hint
 const pwaHint = document.getElementById('pwaHint');
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
