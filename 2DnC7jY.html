@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0d0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wyckoff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Интерактивная схема накопления Вайкоффа">
+<title>Схема накопления Вайкоффа</title>
+
+<!-- Inline SVG icon for apple-touch-icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22%3E%3Crect fill=%22%230d0d0f%22 width=%22180%22 height=%22180%22 rx=%2236%22/%3E%3Cpath d=%22M45 110 L75 70 L105 130 L135 90 L155 65%22 stroke=%22%233b82f6%22 stroke-width=%228%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%22150%22 cy=%2255%22 r=%2212%22 fill=%22%2322c55e%22/%3E%3Ctext x=%2290%22 y=%22155%22 text-anchor=%22middle%22 fill=%22%23f0f0f5%22 font-size=%2232%22 font-family=%22sans-serif%22 font-weight=%22600%22%3EW%3C/text%3E%3C/svg%3E">
+
+<style>
+:root {
+  --bg: #0d0d0f;
+  --surface: #16161a;
+  --surface-hover: #1e1e24;
+  --border: #2a2a32;
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --text-tertiary: #6e6e7e;
+  --accent: #3b82f6;
+  --accent-soft: rgba(59,130,246,0.12);
+  --positive: #22c55e;
+  --positive-soft: rgba(34,197,94,0.12);
+  --danger: #ef4444;
+  --danger-soft: rgba(239,68,68,0.12);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245,158,11,0.12);
+  --purple: #a855f7;
+  --purple-soft: rgba(168,85,247,0.12);
+  --cyan: #06b6d4;
+  --cyan-soft: rgba(6,182,212,0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+}
+
+header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.pwa-hint {
+  display: none;
+  text-align: center;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: var(--radius-md);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pwa-hint.visible { display: block; }
+
+.main-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.phase-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.phase-tab {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.phase-tab:hover, .phase-tab:active {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.phase-tab.active {
+  background: var(--text-primary);
+  color: var(--bg);
+  border-color: var(--text-primary);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg);
+  touch-action: pan-y;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.info-panel {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  min-height: 120px;
+  transition: all var(--transition);
+}
+
+.info-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.info-title .phase-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.info-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.info-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.legend-section {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.legend-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+
+.legend-item:hover {
+  background: var(--surface-hover);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.event-dot {
+  cursor: pointer;
+  transition: r 0.2s ease;
+}
+
+.event-dot:hover, .event-dot:active {
+  r: 8;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.phase-rect {
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.label-text {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.active-ring {
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .container { padding: 12px 12px 24px; }
+  header h1 { font-size: 20px; }
+  header p { font-size: 13px; }
+  .main-card { padding: 14px; border-radius: var(--radius-md); }
+  .phase-tab { padding: 6px 10px; font-size: 12px; }
+  .info-panel { padding: 14px; }
+  .info-title { font-size: 15px; }
+  .info-desc { font-size: 13px; }
+  .legend-grid { grid-template-columns: 1fr; }
+  .legend-item { font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .phase-tabs { gap: 4px; }
+  .phase-tab { padding: 5px 8px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Схема накопления Вайкоффа</h1>
+    <p>Интерактивное руководство по фазам накопления и ключевым событиям</p>
+  </header>
+
+  <div class="pwa-hint" id="pwaHint">
+    📲 Нажмите «Поделиться» → «На экран «Домой»», чтобы установить приложение
+  </div>
+
+  <div class="main-card">
+    <div class="phase-tabs" id="phaseTabs">
+      <button class="phase-tab active" data-phase="all">Все фазы</button>
+      <button class="phase-tab" data-phase="A">Фаза A</button>
+      <button class="phase-tab" data-phase="B">Фаза B</button>
+      <button class="phase-tab" data-phase="C">Фаза C</button>
+      <button class="phase-tab" data-phase="D">Фаза D</button>
+      <button class="phase-tab" data-phase="E">Фаза E</button>
+    </div>
+
+    <div class="chart-wrapper">
+      <svg class="chart-svg" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet">
+        <g stroke="var(--border)" stroke-width="0.6">
+          <line x1="0" y1="60" x2="800" y2="60"/>
+          <line x1="0" y1="120" x2="800" y2="120"/>
+          <line x1="0" y1="180" x2="800" y2="180"/>
+          <line x1="0" y1="240" x2="800" y2="240"/>
+          <line x1="0" y1="300" x2="800" y2="300"/>
+        </g>
+
+        <rect class="phase-rect" id="rectA" x="0" y="0" width="140" height="360" fill="rgba(59,130,246,0.06)" opacity="1"/>
+        <rect class="phase-rect" id="rectB" x="140" y="0" width="240" height="360" fill="rgba(6,182,212,0.06)" opacity="1"/>
+        <rect class="phase-rect" id="rectC" x="380" y="0" width="120" height="360" fill="rgba(168,85,247,0.06)" opacity="1"/>
+        <rect class="phase-rect" id="rectD" x="500" y="0" width="200" height="360" fill="rgba(245,158,11,0.06)" opacity="1"/>
+        <rect class="phase-rect" id="rectE" x="700" y="0" width="100" height="360" fill="rgba(34,197,94,0.06)" opacity="1"/>
+
+        <g stroke="var(--border)" stroke-width="1" stroke-dasharray="5 4">
+          <line x1="140" y1="0" x2="140" y2="360"/>
+          <line x1="380" y1="0" x2="380" y2="360"/>
+          <line x1="500" y1="0" x2="500" y2="360"/>
+          <line x1="700" y1="0" x2="700" y2="360"/>
+        </g>
+
+        <text x="70" y="24" text-anchor="middle" class="label-text" fill="var(--text-tertiary)">Фаза A</text>
+        <text x="260" y="24" text-anchor="middle" class="label-text" fill="var(--text-tertiary)">Фаза B</text>
+        <text x="440" y="24" text-anchor="middle" class="label-text" fill="var(--text-tertiary)">Фаза C</text>
+        <text x="600" y="24" text-anchor="middle" class="label-text" fill="var(--text-tertiary)">Фаза D</text>
+        <text x="750" y="24" text-anchor="middle" class="label-text" fill="var(--text-tertiary)">Фаза E</text>
+
+        <line x1="40" y1="50" x2="720" y2="130" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.7"/>
+
+        <path id="pricePath" d="M 10,45 L 35,55 L 60,40 L 85,70 L 110,60 L 135,95 L 160,75 L 185,90 L 210,80 L 235,100 L 260,85 L 285,105 L 310,95 L 335,115 L 360,100 L 385,125 L 410,130 L 435,120 L 460,140 L 485,125 L 510,150 L 535,135 L 560,115 L 585,95 L 610,75 L 635,90 L 660,65 L 685,55 L 710,45 L 735,35 L 760,28 L 785,22"
+              fill="none" stroke="var(--text-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+        <rect x="130" y="145" width="600" height="28" fill="var(--positive-soft)" stroke="var(--positive)" stroke-width="1" rx="3" opacity="0.8"/>
+        <text x="430" y="164" text-anchor="middle" class="label-text" fill="var(--positive)">Support zone</text>
+
+        <rect x="130" y="78" width="600" height="28" fill="var(--danger-soft)" stroke="var(--danger)" stroke-width="1" rx="3" opacity="0.8"/>
+        <text x="430" y="97" text-anchor="middle" class="label-text" fill="var(--danger)">Resistance zone</text>
+
+        <circle class="event-dot" id="dot-ps" cx="110" cy="60" r="5.5" fill="var(--accent)" stroke="var(--bg)" stroke-width="2.5" data-event="ps"/>
+        <text x="110" y="48" text-anchor="middle" class="label-text" fill="var(--accent)">PS</text>
+
+        <circle class="event-dot" id="dot-sc" cx="135" cy="95" r="6.5" fill="var(--danger)" stroke="var(--bg)" stroke-width="2.5" data-event="sc"/>
+        <text x="135" y="116" text-anchor="middle" class="label-text" fill="var(--danger)">SC</text>
+
+        <circle class="event-dot" id="dot-ar" cx="160" cy="75" r="5.5" fill="var(--cyan)" stroke="var(--bg)" stroke-width="2.5" data-event="ar"/>
+        <text x="160" y="63" text-anchor="middle" class="label-text" fill="var(--cyan)">AR</text>
+
+        <circle class="event-dot" id="dot-st" cx="185" cy="90" r="5.5" fill="var(--purple)" stroke="var(--bg)" stroke-width="2.5" data-event="st"/>
+        <text x="185" y="111" text-anchor="middle" class="label-text" fill="var(--purple)">ST</text>
+
+        <circle class="event-dot" id="dot-spring" cx="410" cy="140" r="6.5" fill="var(--danger)" stroke="var(--bg)" stroke-width="2.5" data-event="spring"/>
+        <text x="410" y="162" text-anchor="middle" class="label-text" fill="var(--danger)">Spring</text>
+
+        <circle class="event-dot" id="dot-test" cx="460" cy="125" r="5.5" fill="var(--warning)" stroke="var(--bg)" stroke-width="2.5" data-event="test"/>
+        <text x="460" y="146" text-anchor="middle" class="label-text" fill="var(--warning)">Test</text>
+
+        <circle class="event-dot" id="dot-sos" cx="610" cy="75" r="5.5" fill="var(--positive)" stroke="var(--bg)" stroke-width="2.5" data-event="sos"/>
+        <text x="610" y="63" text-anchor="middle" class="label-text" fill="var(--positive)">SOS</text>
+
+        <circle class="event-dot" id="dot-bu" cx="635" cy="90" r="5" fill="var(--cyan)" stroke="var(--bg)" stroke-width="2.5" data-event="bu"/>
+        <text x="635" y="80" text-anchor="middle" class="label-text" fill="var(--cyan)">BU</text>
+
+        <circle class="event-dot" id="dot-lps" cx="660" cy="105" r="5.5" fill="var(--accent)" stroke="var(--bg)" stroke-width="2.5" data-event="lps"/>
+        <text x="660" y="126" text-anchor="middle" class="label-text" fill="var(--accent)">LPS</text>
+
+        <circle class="active-ring" id="activeRing" cx="0" cy="0" r="12" fill="none" stroke="var(--accent)" stroke-width="2.5" opacity="0"/>
+      </svg>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <div class="info-title" id="infoTitle">
+        <span>Нажмите на точку события или выберите фазу</span>
+      </div>
+      <div class="info-desc" id="infoDesc">
+        Схема накопления Вайкоффа показывает, как институциональные игроки медленно накапливают позиции перед началом восходящего тренда. Каждая фаза имеет свои характерные признаки и точки входа.
+      </div>
+      <div class="info-tags" id="infoTags"></div>
+    </div>
+
+    <div class="legend-section">
+      <div class="legend-title">Обозначения событий</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><b>PS</b> — предварительная поддержка</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div><b>SC</b> — кульминация продаж</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div><b>AR</b> — автоматический ралли</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><b>ST</b> — вторичный тест</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div><b>Spring</b> — ложный пробой</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><b>Test</b> — тест поддержки</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--positive)"></div><b>SOS</b> — признак силы</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><b>LPS</b> — последняя точка поддержки</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div><b>BU</b> — откат (back-up)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const eventData = {
+  ps: { title: 'PS — Preliminary Support', subtitle: 'Предварительная поддержка', desc: 'Первый намёк на то, что нисходящий тренд замедляется. Объёмы начинают расти, появляются первые покупатели, но тренд ещё не сломан. Это начало интереса «умных денег» к активу.', tags: ['Фаза A', 'Растущие объёмы', 'Тренд не сломан'], phase: 'A', color: 'var(--accent)', colorSoft: 'var(--accent-soft)' },
+  sc: { title: 'SC — Selling Climax', subtitle: 'Кульминация продаж', desc: 'Точка максимального панического страха. Длинная свеча с огромным объёмом и длинной тенью вниз. Слабые держатели продают, сильные скупают. Это дно накопления.', tags: ['Фаза A', 'Максимальный объём', 'Дно'], phase: 'A', color: 'var(--danger)', colorSoft: 'var(--danger-soft)' },
+  ar: { title: 'AR — Automatic Rally', subtitle: 'Автоматический ралли', desc: 'Резкий отскок от SC без особых усилий покупателей — просто продажи иссякают. Цена быстро возвращается к середине диапазона. Верхняя граница будущей зоны накопления.', tags: ['Фаза A', 'Высокая волатильность', 'Верх диапазона'], phase: 'A', color: 'var(--cyan)', colorSoft: 'var(--cyan-soft)' },
+  st: { title: 'ST — Secondary Test', subtitle: 'Вторичный тест', desc: 'Возврат цены к зоне SC, но уже на значительно меньших объёмах. Подтверждает, что продажи иссякают и покупатели контролируют ситуацию. Может повторяться несколько раз.', tags: ['Фаза A/B', 'Низкие объёмы', 'Подтверждение дна'], phase: 'A', color: 'var(--purple)', colorSoft: 'var(--purple-soft)' },
+  spring: { title: 'Spring — Ложный пробой', subtitle: 'Пружина / Spring', desc: 'Цена временно пробивает нижнюю границу поддержки, выбивая стоп-лоссы и заставляя слабых продавать. Но быстро возвращается обратно — «умные деньги» скупают ликвидность. Объёмы на пробое низкие.', tags: ['Фаза C', 'Ложный пробой', 'Сбор ликвидности'], phase: 'C', color: 'var(--danger)', colorSoft: 'var(--danger-soft)' },
+  test: { title: 'Test — Тест поддержки', subtitle: 'Тест после Spring', desc: 'Повторное касание зоны поддержки после Spring. Цена не обновляет минимум Spring, объёмы ещё ниже. Окончательное подтверждение, что продавцы истощены.', tags: ['Фаза C', 'Низкие объёмы', 'Подтверждение силы'], phase: 'C', color: 'var(--warning)', colorSoft: 'var(--warning-soft)' },
+  sos: { title: 'SOS — Sign of Strength', subtitle: 'Признак силы', desc: 'Импульсный выход к верхней границе диапазона на растущих объёмах. Показывает, что покупатели готовы взять контроль. Часто сопровождается пробоем нисходящей линии тренда.', tags: ['Фаза D', 'Растущие объёмы', 'Пробой сопротивления'], phase: 'D', color: 'var(--positive)', colorSoft: 'var(--positive-soft)' },
+  bu: { title: 'BU — Back-Up', subtitle: 'Откат (Back-Up)', desc: 'Коррекция после SOS. Цена возвращается к бывшему сопротивлению, которое теперь стало поддержкой. Идеальная точка для добавления позиций. Объёмы на откате низкие.', tags: ['Фаза D', 'Низкие объёмы', 'Точка входа'], phase: 'D', color: 'var(--cyan)', colorSoft: 'var(--cyan-soft)' },
+  lps: { title: 'LPS — Last Point of Support', subtitle: 'Последняя точка поддержки', desc: 'Последнее касание поддержки перед выходом из диапазона. После LPS цена больше не возвращается в зону накопления. Финальная точка входа с минимальным риском.', tags: ['Фаза D', 'Минимальный риск', 'Финальный вход'], phase: 'D', color: 'var(--accent)', colorSoft: 'var(--accent-soft)' }
+};
+
+const phaseData = {
+  all: { title: 'Полная схема накопления Вайкоффа', subtitle: 'Обзор всех фаз', desc: 'Схема показывает 5 фаз: A — остановка тренда, B — сбор позиций, C — тест (Spring), D — подтверждение силы, E — выход из диапазона. Нажмите на любую точку на графике, чтобы узнать подробности.', tags: ['5 фаз', 'Накопление', 'Wyckoff'], color: 'var(--text-primary)', colorSoft: 'transparent' },
+  A: { title: 'Фаза A — Остановка тренда', subtitle: 'Phase A', desc: 'Нисходящий тренд замедляется. Происходят PS, SC, AR и ST. «Умные деньги» начинают скупать актив у паникующих продавцов. Объёмы на SC максимальны, на ST — падают.', tags: ['PS', 'SC', 'AR', 'ST'], color: 'var(--accent)', colorSoft: 'var(--accent-soft)' },
+  B: { title: 'Фаза B — Сбор позиций', subtitle: 'Phase B', desc: 'Длительный боковик между уровнями SC/ST и AR. «Умные деньги» методично накапливают позиции, не давая цене выйти из диапазона. Может длиться недели или месяцы.', tags: ['Боковик', 'Низкая волатильность', 'Сбор позиций'], color: 'var(--cyan)', colorSoft: 'var(--cyan-soft)' },
+  C: { title: 'Фаза C — Тест (Spring)', subtitle: 'Phase C', desc: 'Ложный пробой поддержки для выбивания стоп-лоссов и сбора ликвидности. После Spring следует Test — подтверждение, что продавцы истощены. Часто лучшая точка входа.', tags: ['Spring', 'Test', 'Ложный пробой'], color: 'var(--purple)', colorSoft: 'var(--purple-soft)' },
+  D: { title: 'Фаза D — Подтверждение тренда', subtitle: 'Phase D', desc: 'SOS показывает силу покупателей. BU/LPS — откаты к поддержке, идеальные для входа. Объёмы растут на движении вверх и падают на коррекциях.', tags: ['SOS', 'BU', 'LPS', 'Признак силы'], color: 'var(--warning)', colorSoft: 'var(--warning-soft)' },
+  E: { title: 'Фаза E — Выход из диапазона', subtitle: 'Phase E', desc: 'Цена пробивает Resistance Zone и начинает устойчивый восходящий тренд. Зона накопления остается поддержкой. Начинается марк-ап фаза.', tags: ['Пробой', 'Тренд вверх', 'Марк-ап'], color: 'var(--positive)', colorSoft: 'var(--positive-soft)' }
+};
+
+const tabs = document.querySelectorAll('.phase-tab');
+const dots = document.querySelectorAll('.event-dot');
+const infoTitle = document.getElementById('infoTitle');
+const infoDesc = document.getElementById('infoDesc');
+const infoTags = document.getElementById('infoTags');
+const activeRing = document.getElementById('activeRing');
+const phaseRects = { A: document.getElementById('rectA'), B: document.getElementById('rectB'), C: document.getElementById('rectC'), D: document.getElementById('rectD'), E: document.getElementById('rectE') };
+
+function showInfo(data, cx, cy) {
+  infoTitle.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${data.color};margin-right:8px;"></span>${data.title} <span style="color:var(--text-tertiary);font-size:14px;font-weight:400;margin-left:6px;">${data.subtitle || ''}</span>`;
+  infoDesc.textContent = data.desc;
+  infoTags.innerHTML = data.tags.map(t => `<span class="info-tag" style="background:${data.colorSoft};color:${data.color};">${t}</span>`).join('');
+  if (cx !== undefined && cy !== undefined) {
+    activeRing.setAttribute('cx', cx);
+    activeRing.setAttribute('cy', cy);
+    activeRing.setAttribute('opacity', '1');
+    activeRing.setAttribute('stroke', data.color);
+  } else {
+    activeRing.setAttribute('opacity', '0');
+  }
+}
+
+function highlightPhase(phase) {
+  Object.keys(phaseRects).forEach(p => {
+    phaseRects[p].setAttribute('opacity', phase === 'all' || phase === p ? '1' : '0.08');
+  });
+}
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const phase = tab.dataset.phase;
+    highlightPhase(phase);
+    showInfo(phaseData[phase]);
+  });
+});
+
+dots.forEach(dot => {
+  dot.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const eventKey = dot.dataset.event;
+    const data = eventData[eventKey];
+    showInfo(data, dot.getAttribute('cx'), dot.getAttribute('cy'));
+    if (data.phase) {
+      highlightPhase(data.phase);
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.phase === data.phase));
+    }
+  });
+});
+
+document.querySelector('.chart-svg').addEventListener('click', (e) => {
+  if (e.target.tagName === 'svg' || e.target.classList.contains('phase-rect')) {
+    activeRing.setAttribute('opacity', '0');
+  }
+});
+
+// ===== PWA: Inline Service Worker via Blob =====
+const swCode = `self.addEventListener('install', e => e.waitUntil(caches.open('wyckoff-v1').then(c => c.addAll(['./'])).then(() => self.skipWaiting())));
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`;
+
+if ('serviceWorker' in navigator) {
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// ===== PWA: Inline Manifest via Blob =====
+const manifest = {
+  name: 'Схема накопления Вайкоффа',
+  short_name: 'Wyckoff',
+  description: 'Интерактивное руководство по фазам накопления Вайкоффа',
+  start_url: './',
+  display: 'standalone',
+  background_color: '#0d0d0f',
+  theme_color: '#0d0d0f',
+  orientation: 'portrait',
+  scope: './',
+  icons: [
+    { src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22%3E%3Crect fill=%22%230d0d0f%22 width=%22192%22 height=%22192%22 rx=%2238%22/%3E%3Cpath d=%22M48 118 L80 74 L112 138 L144 96 L164 70%22 stroke=%22%233b82f6%22 stroke-width=%228%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%22156%22 cy=%2260%22 r=%2214%22 fill=%22%2322c55e%22/%3E%3Ctext x=%2296%22 y=%22166%22 text-anchor=%22middle%22 fill=%22%23f0f0f5%22 font-size=%2236%22 font-family=%22sans-serif%22 font-weight=%22600%22%3EW%3C/text%3E%3C/svg%3E', sizes: '192x192', type: 'image/svg+xml' },
+    { src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect fill=%22%230d0d0f%22 width=%22512%22 height=%22512%22 rx=%22102%22/%3E%3Cpath d=%22M128 314 L213 197 L298 368 L384 256 L437 187%22 stroke=%22%233b82f6%22 stroke-width=%2220%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%22416%22 cy=%22160%22 r=%2238%22 fill=%22%2322c55e%22/%3E%3Ctext x=%22256%22 y=%22442%22 text-anchor=%22middle%22 fill=%22%23f0f0f5%22 font-size=%2296%22 font-family=%22sans-serif%22 font-weight=%22600%22%3EW%3C/text%3E%3C/svg%3E', sizes: '512x512', type: 'image/svg+xml' }
+  ]
+};
+
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+const manifestLink = document.createElement('link');
+manifestLink.rel = 'manifest';
+manifestLink.href = URL.createObjectURL(manifestBlob);
+document.head.appendChild(manifestLink);
+
+// ===== PWA: Install hint =====
+const pwaHint = document.getElementById('pwaHint');
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isAndroid = /Android/.test(navigator.userAgent);
+
+if (!isStandalone && (isIOS || isAndroid)) {
+  pwaHint.classList.add('visible');
+  setTimeout(() => { pwaHint.classList.remove('visible'); }, 8000);
+}
+</script>
+</body>
+</html>
