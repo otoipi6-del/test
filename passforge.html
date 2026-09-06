@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1115">
+<title>PassForge — генератор паролей и токенов</title>
+<style>
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+  --text:#e8eaf0; --muted:#9aa3b2; --accent:#5b8cff; --accent2:#37d0a6;
+  --danger:#ff6b6b; --warn:#ffb347; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;min-height:100vh}
+header{display:flex;align-items:center;gap:12px;padding:18px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#14171e,transparent)}
+header .logo{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 200deg,#5b8cff,#37d0a6,#a78bfa,#5b8cff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b0d12;font-size:18px}
+header h1{font-size:20px;font-weight:700;letter-spacing:.3px}
+header p{color:var(--muted);font-size:13px}
+main{max-width:860px;margin:0 auto;padding:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+.tab:hover{border-color:var(--accent)}
+.tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel{display:none}
+.panel.on{display:block}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.row label{flex:0 0 150px;color:var(--muted);font-size:13px}
+.row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.row input[type=text],.row select,.row input[type=number]{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:14px;font-family:ui-monospace,Consolas,monospace}
+.row input[type=text]{flex:1;min-width:120px}
+.row input[type=number]{width:74px;flex:0 0 auto}
+.row select{font-family:inherit}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;margin:0 14px 0 0;white-space:nowrap}
+.chk input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+#outWrap{position:relative;margin-bottom:14px}
+#out{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:16px 60px 16px 16px;font:600 19px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.5px;word-break:break-all}
+#copyBtn{position:absolute;top:50%;right:10px;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:var(--accent);border:none;color:#fff;font-size:16px;cursor:pointer}
+#copyBtn:hover{filter:brightness(1.12)}
+#genBig{width:100%;margin-bottom:18px;padding:13px;font-size:15px}
+.meter{display:flex;gap:5px;margin-bottom:10px}
+.meter i{flex:1;height:8px;border-radius:4px;background:var(--panel2);transition:.3s}
+.meter i.f1{background:var(--danger)}
+.meter i.f2{background:var(--warn)}
+.meter i.f3{background:#e8d44d}
+.meter i.f4{background:var(--accent2)}
+.meter i.f5{background:#2ee6a8}
+#strengthLine{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13.5px;margin-bottom:8px}
+#strengthLine b{font-size:15px}
+#crack{font-size:13px;color:var(--muted)}
+#crack b{color:var(--text)}
+#warnings{margin:10px 0 0;padding-left:18px;color:var(--warn);font-size:13px}
+#warnings li{margin-bottom:3px}
+#checkInput{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:14px 16px;font:600 16px/1.4 ui-monospace,Consolas,monospace;margin-bottom:14px}
+.hist{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px}
+.hist code{flex:1;font:13px ui-monospace,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.hist code:hover{color:var(--accent)}
+.hist .t{font-size:11px;color:var(--muted);flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.hist button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px}
+.hist button:hover{color:var(--danger)}
+.linkbtn{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-decoration:underline dotted}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:20px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);border:1px solid var(--accent);color:var(--text);padding:11px 22px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:var(--danger)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">PF</div>
+  <div>
+    <h1>PassForge — генератор паролей и токенов</h1>
+    <p>Криптографический ГПСЧ браузера (crypto.getRandomValues). Ничего не отправляется и не сохраняется.</p>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-p="pPass">🔑 Пароль</button>
+      <button class="tab" data-p="pPhrase">💬 Кодовая фраза</button>
+      <button class="tab" data-p="pToken">🎫 Токен</button>
+      <button class="tab" data-p="pCheck">🩺 Проверка пароля</button>
+    </div>
+
+    <!-- ПАРОЛЬ -->
+    <div class="panel on" id="pPass">
+      <div class="row"><label>Длина</label>
+        <input type="range" id="len" min="4" max="64" value="20">
+        <input type="number" id="lenNum" min="4" max="64" value="20">
+      </div>
+      <div class="row"><label>Символы</label>
+        <label class="chk"><input type="checkbox" id="useUpper" checked> A–Z</label>
+        <label class="chk"><input type="checkbox" id="useLower" checked> a–z</label>
+        <label class="chk"><input type="checkbox" id="useDigits" checked> 0–9</label>
+        <label class="chk"><input type="checkbox" id="useSymbols" checked> !@#$</label>
+      </div>
+      <div class="row"><label>Набор символов</label>
+        <input type="text" id="symCustom" value="!@#$%^&amp;*()-_=+[]{};:,.&lt;&gt;?/~">
+      </div>
+      <div class="row"><label>Опции</label>
+        <label class="chk"><input type="checkbox" id="noAmb" checked> без l I 1 O 0</label>
+        <label class="chk"><input type="checkbox" id="mustAll" checked> минимум 1 из каждой группы</label>
+      </div>
+    </div>
+
+    <!-- ФРАЗА -->
+    <div class="panel" id="pPhrase">
+      <div class="row"><label>Язык словаря</label>
+        <select id="lang">
+          <option value="ru" selected>Русский</option>
+          <option value="en">English</option>
+        </select>
+        <span id="wdesc" style="font-size:12.5px;color:var(--muted)"></span>
+      </div>
+      <div class="row"><label>Слов в фразе</label>
+        <input type="range" id="wcount" min="3" max="12" value="6">
+        <input type="number" id="wcountNum" min="3" max="12" value="6">
+      </div>
+      <div class="row"><label>Разделитель</label>
+        <select id="sep">
+          <option value="-" selected>дефис (-)</option>
+          <option value=" ">пробел</option>
+          <option value=".">точка (.)</option>
+          <option value="_">подчёркивание (_)</option>
+          <option value="">без разделителя</option>
+          <option value="digit">случайная цифра</option>
+        </select>
+      </div>
+      <div class="row"><label>Опции</label>
+        <label class="chk"><input type="checkbox" id="capWords"> с заглавной буквы</label>
+        <label class="chk"><input type="checkbox" id="addDigit" checked> + цифра в конце</label>
+      </div>
+      <div class="hint" style="font-size:12.5px;color:var(--muted)">Фразу легко запомнить, а перебор словарных комбинаций сложнее брутфорса короткого пароля.</div>
+    </div>
+
+    <!-- ТОКЕН -->
+    <div class="panel" id="pToken">
+      <div class="row"><label>Тип</label>
+        <select id="tokType">
+          <option value="hex" selected>Hex (a-f0-9)</option>
+          <option value="b64">Base64</option>
+          <option value="b64url">Base64url (для URL/API)</option>
+          <option value="uuid">UUID v4</option>
+          <option value="pin">Числовой PIN</option>
+        </select>
+      </div>
+      <div class="row" id="tokLenRow"><label>Длина</label>
+        <input type="range" id="tokLen" min="8" max="64" value="32">
+        <input type="number" id="tokLenNum" min="8" max="64" value="32">
+      </div>
+      <div class="row" id="pinLenRow" style="display:none"><label>Разрядов</label>
+        <input type="range" id="pinLen" min="4" max="12" value="6">
+        <input type="number" id="pinLenNum" min="4" max="12" value="6">
+      </div>
+    </div>
+
+    <!-- ПРОВЕРКА -->
+    <div class="panel" id="pCheck">
+      <input type="text" id="checkInput" placeholder="Введите пароль для проверки — анализ идёт локально, ничего не отправляется" autocomplete="off">
+      <div class="hint" style="font-size:12.5px;color:var(--muted);margin-top:-6px;margin-bottom:0">Проверка не гарантирует безопасность — пароль может быть скомпрометирован ранее. Рекомендуется менеджер паролей.</div>
+    </div>
+
+    <!-- ВЫВОД -->
+    <div id="outWrap">
+      <div id="out">—</div>
+      <button id="copyBtn" title="Копировать">📋</button>
+    </div>
+    <button class="tab on" id="genBig" style="width:100%;background:var(--accent);border-color:var(--accent);color:#fff">🎲 Сгенерировать</button>
+
+    <div class="meter"><i></i><i></i><i></i><i></i><i></i></div>
+    <div id="strengthLine"><b id="verdict">—</b><span id="bits"></span></div>
+    <div id="crack"></div>
+    <ul id="warnings"></ul>
+  </div>
+
+  <div class="card" id="histCard" style="display:none">
+    <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">История (только до закрытия вкладки) <button class="linkbtn" id="histClear" style="float:right">очистить</button></h2>
+    <div id="histList"></div>
+  </div>
+</main>
+<footer>PassForge • crypto.getRandomValues • без модульного смещения (rejection sampling) • история не сохраняется<span id="pwaNote"></span></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+
+/* ---------- крипто-ГПСЧ без модульного смещения ---------- */
+function randInt(max){
+  const buf=new Uint32Array(1);
+  const limit=Math.floor(0x100000000/max)*max;
+  let x;
+  do{ crypto.getRandomValues(buf); x=buf[0]; }while(x>=limit);
+  return x%max;
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=randInt(i+1); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+function randBytes(n){ const b=new Uint8Array(n); crypto.getRandomValues(b); return b; }
+
+/* ---------- словари кодовых фраз ---------- */
+const WL_RU=["абажур","аббат","абзац","абонент","абрикос","абсурд","авангард","авантюра","авария","август","авиация","авоська","агат","агент","агрегат","адвокат","адмирал","адрес","азбука","азот","айсберг","академия","акварель","акведук","аккорд","акробат","аксиома","актёр","акула","акцент","акция","алгоритм","алиби","аллея","алмаз","алфавит","амбар","аметист","ампир","амулет","анализ","ангар","анекдот","анкета","анонс","антена","антураж","аперитив","апогей","апофеоз","арбуз","аргумент","арена","аристократ","арка","аркада","артист","аспект","аспирин","ассорти","астра","астроном","ателье","атлант","атлас","атмосфера","атрибут","афера","афиша","афоризм","ацетон","аэропорт","бабочка","багаж","багет","бадья","базар","базис","баклажан","балкон","баллад","балласт","бамбук","бампер","банкет","банкнота","барабан","баран","барбекю","барельеф","бархат","басня","бастион","батон","батут","баул","баян","бегемот","бегония","бедро","безделушка","бекон","белка","бельё","берёза","берлога","беседа","бетон","библиотека","бивень","бигуди","билет","биржа","бисквит","битва","благо","бланк","блеск","близнецы","блокнот","блондин","блоха","блюдо","бляха","бобёр","богатство","болид","болото","бомбардир","бордюр","борода","ботинок","бочка","браслет","братья","бревно","бригада","бриллиант","брошюра","брюки","бублик","бубен","бугор","будка","буква","букет","буксир","булочка","бульон","бумеранг","бункер","бунт","бурдюк","бурят","бутон","бухта","бушлат","бытие","бюджет","бюрократ","вагон","важность","ваза","вакуум","валенок","валун","вальс","вандал","ваниль","варежка","вариант","ватрушка","вафля","вахта","ведро","ведьма","вездеход","вектор","велик","величие","вельвет","венгр","венец","вентиль","вепрь","веранда","верблюд","вердикт","верёвка","вернисаж","верста","вертолёт","весло","вестибюль","ветеран","ветчина","веха","веяние","вибратор","виза","викинг","вилка","виньетка","виола","виртуоз","виски","витамин","витраж","вихрь","вишня","вклад","владение","внук","вогнут","водолаз","водород","вожак","воздух","вокзал","волан","волнение","волокно","вольтаж","вопрос","ворон","воскресенье","восторг","вотум","вояка","выбор","вывод","выгода","выдра","выемка","выжимка","выигрыш","викторина","выкладка","вымпел","выпук","выручка","высота","выставка","выть","вычет","вышивка","вьюн","вязанка","вятка","гавань","гагачий","гадюка","газель","газон","гайка","галерея","галоши","гамбит","гангрена","гараж","гардероб","гармошка","гарнир","гарпун","гастроль","гаубица","гвалт","гвоздика","гегемон","гектар","гель","генезис","геолог","гербарий","герц","гетры","гжель","гибрид","гигант","гимн","гипноз","гипотеза","гиря","гитара","глазок","гласность","глицин","глобус","глоток","глубина","глубь","глушь","гнейс","гном","гобелен","гоголь","годовщик","голем","голубь","гольф","гондола","гончар","горб","горечь","горизонт","горностай","горох","град","грамота","гранит","графа","график","гравюра","гречка","гривна","гриль","гром","гроссбух","грош","груздь","грунт","грыжа","губернатор","гудок","гуж","гуманизм","гурман","гусли","гуашь","давление","дактиль","дежурка","деликатес","дельта","демон","деньги","депеша","депо","десант","деталь","дефиле","джинн","диадема","диалог","дивизион","диета","дилер","динамо","диплом","дирижёр","дичь","дневник","довод","догма","дозор","доклад","долг","долина","домкрат","донор","досье","драгун","древо","дремота","дроги","дрозд","дромадер","дрюч","дубль","дувал","дуга","дудка","думка","дуэт","духовка","дуэль","дымка","дыня","дюжина","дюйм","дюна","дятел","евангелие","егерь","единорог","жердь","жеребец","жерло","жесть","жетон","жижа","жилет","жокей","журавль","забава","завет","загадка","залив","замок","запястье","заря","заслон","жатва","звон","звук","зебра","зевок","зелот","зенит","зеркало","зефир","зигзаг","зима","злато","злодей","знамя","зонд","зрелище","зубр","зыбка","иврит","иглу","иго","иероглиф","известь","изгиб","излом","иллюзия","имбирь","импульс","индекс","иней","инициал","ирмос","исход","иуда","ифрит","ишак","июль","кабаре","кабель","кабина","кавалер","кагор","кадет","кадка","кадриль","казино","казус","кайма","каламбур","калейдоскоп","калибр","калитка","калоша","калька","камзол","каморка","кампус","канат","каноэ","кант","капитал","капкан","капот","капучино","караул","карбюратор","кардан","карета","карниз","карта","каскад","каска","касса","каталог","катар","катер","кафель","каюта","квадро","квест","киви","кинжал","кипарис","кирка","кисель","кисть","клад","кладбище","клапан","кларнет","клерк","клешня","клише","клип","клоун","клумба","клюква","клятва","ковбой","ковш","кодекс","кожух","козырь","кокон","колбаса","колдун","колода","колос","кольцо","комар","комбайн","комитет","компас","конверт","кондор","консул","контур","конус","конь","копна","корвет","корзина","корка","корм","короб","корона","корпус","коса","косынка","кофр","кошма","кравец","кран","кредо","крейцер","крем","крепь","кризис","кросс","круг","круп","крыльцо","кубок","кувшин","кузнец","кукла","кукушка","кулон","культура","кумир","купе","купол","курант","курган","курс","куст","кухня","лабиринт","лавина","лавка","ладья","лазер","лампа","лангол","лапта","ларец","ласта","латунь","лауреат","левша","легенда","лёгкое","лезвие","лейтенант","лекарь","лемма","лепет","лесник","летопись","ливень","лигatura","лимон","линза","лира","листв","лобби","локон","лом","лонжерон","лорд","лотерея","лошадь","луг","луковица","лунатик","лыко","льгота","льстец","люкс","магнит","мажор","малина","мангал","манекен","манускрипт","марафон","мармелад","марс","мастер","матадор","матрос","мафия","махорка","мебель","медаль","медуза","мелодия","мемуар","ментор","меридиан","метр","механизм","меценат","миг","микроб","милиция","минарет","мироз","митинг","мишень","мозаика","молебен","мольберт","монарх","монокль","мораль","морковь","мотив","мотор","мудрец","мундир","мусор","мутон","мушкет","мысл","мэрия","мюсли","навигатор","наган","назар","наказ","накрытие","намёт","нарцисс","натюрморт","неон","нивелир","нимб","нирвана","новелла","ноктюрн","номер","нота","нюанс","оазис","обелиск","обжора","облако","обод","овал","овраж","огнетушитель","одеколон","ожерелье","океан","октава","олух","омлет","оникс","опека","оракул","орбита","орган","орден","ореол","оркестр","орнамент","осока","отара","отель","откос","отрава","очаг","ошейник","памфлет","пандус","панель","пантеон","папирус","парад","парафин","паркет","пародия","паста","патрон","пафос","педаль","пейзаж","пеликан","пемза","пенсне","пепел","перекид","перламутр","песнь","петля","пианино","пижон","пикник","пила","пингвин","пират","пистон","пицца","план","плеть","плот","плюмаж","плющ","подиум","поездка","пожар","позор","поиск","пойло","полюс","помост","понтон","похороны","пошлина","право","причал","прогон","пролог","проспект","протокол","профиль","публика","пунш","пурга","путевка","пуф","пушкин","пчела","пшеница","пыль","пятачок","рабат","радар","развал","ракурс","рапира","раствор","ратуша","рафинад","регалия","регистр","рейс","ректор","ремесло","ренегат","репа","репортаж","речь","рифма","робот","родео","розга","романс","рондо","ростов","роща","рубеж","рубль","рулад","румба","рупор","рывок","рысь","сабля","салют","салфетка","сандвич","сапог","сарказм","сатира","свадьба","свирель","свиток","сегмент","седан","сейф","сектант","серпантин","сигара","силуэт","символ","синтез","сирень","скакун","скала","сквер","скит","скорпион","скрип","сленг","слива","слог","снайпер","соболь","совхоз","сокол","соловей","сонет","сопрано","сорбон","сорок","сосна","соус","спектр","спица","спрут","сценарий","стадо","стан","стезя","стиль","стог","столовая","строфа","султан","сумрак","суслик","сутана","сфера","схема","съезд","табло","табун","тайфун","такт","талант","талон","тандем","тарелка","тать","тезис","тека","телега","темп","термин","тетрадь","тирада","титул","товарищ","токарь","толк","тондо","тополь","торт","трюк","туз","тумба","тур","тушь","уголёк","уголь","удар","узда","узник","уклад","уксус","улей","улитка","ультиматум","умник","унция","упырь","урок","урна","усадьба","утёс","утилита","утюг","ухо","учёба","фабула","фаворит","фазан","факел","факс","фальш","фанфара","фара","фарфор","фаска","фаянс","феникс","ферзь","фиалка","фигура","физик","филармония","финик","финт","флажок","флейта","фломастер","флора","флюгер","фокус","фольга","фонд","формат","формула","фото","фраза","фреска","фронтон","фрукт","фурор","футляр","футболка","халиф","хамелеон","хитон","хлам","хлопок","хмель","хобот","холм","хор","хорал","хорёк","хроника","хутор","цапля","цвет","цедра","цель","цемент","цензор","церковь","цикл","цимбал","цинк","цирк","цитата","цифра","цоколь","чабан","чад","чайник","чартер","чаща","чекан","черёмуха","чернильница","черта","честь","чешуя","чинара","чип","чугун","чулок","чурбан","чутк","шаблон","шагрень","шайба","шалаш","шампур","шансон","шарм","шасси","шатёр","шахта","швабра","шедевр","шёлк","шериф","шест","шиворот","шиллинг","шинель","шифер","шкаф","шлам","шлем","шницель","шпага","шпион","шрифт","штамб","штат","штора","штурвал","штык","шуба","щегол","щётка","щит","эврика","эгида","эмаль","эмблема","эпиграф","эпитет","эра","эскиз","эспадрон","эстакада","этика","этюд","юбилей","юмор","юнга","юнкер","юрисдикция","яхта","яшма","яхонт"];
+const WL_EN=["abacus","abbey","ability","absent","absorb","accent","accept","access","accident","accord","account","accuse","ace","acorn","acoustic","acquire","acre","acrobat","act","action","active","actor","acute","adapt","add","adhere","adjective","adjust","admire","admit","adobe","adopt","adore","adorn","adult","advance","advent","adverb","adverse","advice","advise","aerial","affair","affect","affiliate","affirm","affix","afford","afraid","after","age","agency","agenda","agent","agile","agony","agree","ahead","aid","ailment","aim","airborne","aircraft","airport","aisle","alarm","album","alcohol","alert","algebra","alias","alibi","alien","align","alike","alive","alkali","allay","allege","alley","alliance","allied","allocate","allowance","alloy","allure","ally","almanac","almond","almost","aloft","alone","along","aloof","aloud","alpha","alpine","also","altar","alter","alternate","although","altitude","alto","aluminum","always","amalgam","amateur","amaze","amber","ambient","ambush","amend","amiable","amnesty","among","amount","ampere","ample","amplify","amulet","amuse","anagram","anchor","ancient","anecdote","angel","anger","angle","angora","angry","animal","anion","anise","ankle","annals","annex","announce","annoy","annual","anode","answer","antelope","antenna","anthem","anthill","antibody","antique","antler","anvil","anxiety","anxious","any","apart","apathy","aperture","apex","aphid","aplomb","apostle","appeal","appear","appendix","applause","apple","applied","appoint","approve","apricot","apron","apt","aqua","aqueduct","arabesque","arbiter","arbor","arcade","arch","ardent","arena","argon","argue","aria","arid","arise","armada","armful","armor","aroma","around","arousal","array","arrest","arrival","arrow","arsenal","artery","article","artisan","ascend","ascetic","ash","aside","askew","aspect","asphalt","aspirant","assail","assault","assay","assemble","assent","assert","assign","assist","associate","assort","assume","assure","aster","asterisk","asthma","astonish","astral","astride","asylum","athlete","atlas","atoll","atom","atrium","attach","attack","attain","attempt","attend","attic","attitude","attorney","attract","attribute","atypical","auction","audible","audit","auditor","august","aunt","author","autocrat","automaton","autumn","avenue","average","aversion","aviator","avid","avocado","avoid","await","awake","award","aware","awash","away","awe","awkward","awning","axiom","azalea","azimuth","azure","bacon","badge","badger","bagel","baggage","bagpipe","bail","bait","bakery","balance","balcony","bald","bale","balk","ballad","ballet","balloon","ballot","balsam","bamboo","banana","band","bandage","bandit","banish","banjo","banker","banner","banquet","banter","barbecue","barber","barcode","bargain","barge","baritone","barley","barn","baron","barracks","barrel","barren","barricade","barrier","barrow","basalt","base","basil","basin","basket","bassoon","bastion","batch","bathe","baton","battalion","batter","battery","battle","bauble","bazaar","beacon","bead","beagle","beaker","beam","bean","bear","beard","beast","beat","beauty","beaver","become","bedbug","bedside","beehive","beeline","beer","beetle","before","beggar","begin","behalf","behave","behind","beige","being","belated","belief","bell","bellow","belly","belong","below","belt","bench","bend","beneath","benefit","bengal","benign","benzene","bequest","beret","berry","berth","besides","besiege","best","betray","better","between","beverage","beware","bewilder","beyond","bias","biceps","bicycle","bidet","bifold","bigot","bijou","bile","bilge","billiard","billion","billow","biology","birch","bird","birth","biscuit","bishop","bison","bitch","bizarre","blabber","black","blade","blame","blanch","bland","blank","blare","blast","blatant","blaze","bleach","bleak","bleat","bled","blend","bless","blind","blink","bliss","blithe","blizzard","bloated","blob","bloc","block","blonde","blood","bloom","blossom","blot","blouse","blow","blue","bluff","blunt","blur","blush","boa","board","boast","boat","bobbin","bobcat","bode","bodice","bogey","bogus","boisterous","bold","bologna","bolster","bolt","bombard","bonanza","bond","bone","bonfire","bonnet","bonus","booby","book","boom","boon","boost","boot","booth","borax","border","boreal","boring","borough","borrow","bosom","boss","botany","botch","bottle","bottom","boulder","boulevard","bounce","bound","bounty","bouquet","bourbon","bourgeois","bout","boutique","bovine","bowler","boxcar","boyish","brace","bracket","brackish","brad","braid","braille","brain","bran","branch","brand","brash","brass","bravado","brave","bravo","brawl","brawn","bray","brazen","breach","bread","break","bream","breath","breech","breed","breeze","brethren","brevet","brew","briar","bribe","brick","bridal","bridge","bridle","brief","brigade","bright","brilliant","brim","brine","bring","brink","briny","brisk","bristle","brittle","broach","broad","brocade","broccoli","brochure","brogue","broil","broker","bromine","bronco","bronze","brooch","brood","brook","broom","broth","brother","brow","brown","browse","bruise","brunet","brunt","brush","brusque","brutal","brute","bubble","buccaneer","buck","bucket","buckle","bucolic","budge","budget","buff","buffalo","buffer","buffet","bugle","build","bulbul","bulge","bulk","bulldog","bullet","bullion","bully","bulwark","bumble","bump","bunion","bungle","bunk","bunker","bunny","bunt","buoy","burden","bureau","burgess","burglar","burgundy","burley","burrow","bursar","burst","bury","bus","busby","bushel","bush","business","buskin","bustle","butane","butler","butt","butte","butter","button","buttress","buxom","buyer","buzzard","byline","byword","cabal","cabaret","cabbage","cabbie","cabin","cabinet","cable","caboose","cache","cackle","cactus","cadet","cadmium","cadre","caesium","cafe","caffeine","caftan","cage","cahoots","cairn","calcium","calculate","calculus","caldron","calendar","caliber","calico","caliper","caliph","callous","calm","caloric","calorie","calumet","calvary","calyx","camber","cambric","cameo","camera","camisole","camomile","camp","campaign","campus","canal","canary","candid","candle","candor","canine","canister","cannery","cannon","cannot","canny","canoe","canopy","cant","cantata","canteen","canter","canto","canvas","canyon","capable","capacious","cape","caper","capillary","capital","capitol","caprice","capsule","captain","caption","captivate","captive","capture","carafe","caramel","caravan","caraway","carbide","carbine","carbon","carcass","card","cardiac","cardinal","cardigan","care","career","carefree","careful","caress","caret","cargo","caribou","carnival","carol","carouse","carousel","carp","carpenter","carpet","carriage","carrier","carrot","carry","carte","cartel","cartilage","cartload","carton","cartoon","cartridge","cascade","case","cash","casino","casket","cassock","cast","caste","castle","casual","casualty","cataclysm","catacomb","catalog","catalyst","catapult","cataract","catarrh","catastrophe","catbird","catcall","catch","category","catenary","cater","caterpillar","cathedral","catkin","catsup","cattle","catwalk","caucus","cauldron","cause","causeway","caution","cavalier","cavalry","cave","cavern","caviar","cavil","cavity","cavort","cede","cedar","ceding","ceiling","celebrant","celery","cellar","cello","cement","cemetery","censor","census","centaur","center","centigrade","centimeter","central","century","ceramic","cereal","cerebral","cerebrum","certain","certiorari","cervical","cesium","cesspool","chafe","chaff","chagrin","chain","chair","chaise","chalice","chalk","challenger","chamber","chamois","champ","chancel","chancellor","chancery","chancy","chandelier","chandler","change","channel","chant","chaos","chapel","chaperon","chaplain","chaplet","chapter","char","character","charade","charcoal","charge","chariot","charisma","charity","charlatan","charm","charnel","chart","charter","chase","chasm","chassis","chaste","chastise","chateau","chattel","chatter","cheap","cheat","check","checker","checkout","cheek","cheer","cheese","chef","cheetah","chemical","chemise","chemistry","chenille","cheque","cherish","cheroot","cherry","chert","cherub","chess","chest","chevron","chevy","chew","chiaroscuro","chic","chicanery","chick","chicken","chide","chief","chieftain","chiffon","chignon","chilblain","child","chile","chili","chill","chime","chimney","chimp","chinchilla","chine","chink","chintz","chip","chipmunk","chirp","chisel","chit","chitchat","chivalry","chive","chloride","chloroform","chocolate","choice","choir","choke","cholera","choose","chop","chopper","choral","chord","chore","chorea","chorister","chortle","chorus","chose","chosen","chowder","chrism","christen","chrome","chronic","chronicle","chubby","chuck","chuckle","chum","chump","chunk","church","churn","chute","chutzpah","cider","cigar","cinder","cinema","cinch","cincture","cinnamon","cipher","circa","circle","circuit","circular","circulate","circumflex","circumscribe","circumspect","circus","cistern","citadel","citation","cite","citizen","citric","citrus","city","civic","civil","civility","claimant","clairvoyant","clam","clamor","clamp","clan","clandestine","clang","clank","clap","claret","clarify","clarinet","clarity","clash","clasp","class","classic","clause","clavicle","claw","clay","clean","cleanse","clear","cleat","cleavage","cleave","cleft","clemency","clergy","cleric","clerk","clever","clew","click","client","cliff","climate","climax","climb","clime","clinch","cling","clinic","clink","clinker","clip","clipboard","cloister","clone","clop","close","closet","closure","clot","cloth","clothe","clothes","cloud","clout","clove","clover","clown","cloy","club","cluck","clue","clump","clumsy","clung","cluster","clutch","clutter","coagulate","coal","coalesce","coalition","coarse","coast","coat","coax","cobble","cobra","cocci","cock","cockade","cockatoo","cockle","cockpit","cockroach","cocktail","cocoa","coconut","cocoon","codex","codfish","codger","codicil","coerce","coexist","coffee","coffer","coffin","cogent","cognac","cognate","cognomen","cohabit","cohere","cohesion","cohort","coiffure","coil","coin","coincide","coke","colander","cold","coleus","colic","coliseum","collage","collapse","collar","collate","colleague","collect","college","collide","collie","collision","colloquy","collusion","colon","colonel","colonial","colony","colophon","color","colossal","colt","columbine","column","coma","comatose","combat","combatant","comber","combine","combust","come","comeback","comedy","comely","comet","comfort","comic","coming","comma","command","commandant","commemorate","commence","commend","comment","commerce","commingle","commiserate","commissar","commission","commit","commode","commodore","common","commotion","communal","commune","communicate","communion","communiqué","community","commute","compact","companion","company","compare","compass","compel","compendium","compensate","compete","competence","compile","composure","compound","comprehend","compress","comprise","compromise","comptroller","compulsion","compute","comrade","conclave","conclude","concoct","concord","concourse","concrete","concubine","concur","concuss","condemn","condense","condescend","condign","condiment","condition","condole","condolence","condone","condor","conducive","conduct","conduit","confab","confabulate","confection","confederate","confer","confess","confetti","confidant","confide","confidence","confine","confirm","confiscate","conflagration","conflate","conflict","confluence","conform","confound","confront","confuse","confute","congeal","congener","congenial","congenital","conger","conglomerate","congratulate","congregate","congress","congruent","conic","conifer","conjecture","conjugal","conjugate","conjunct","conjuncture","conjure","conk","connect","connive","connote","connubial","conquer","conquest","consanguine","conscience","conscientious","conscious","conscript","consecrate","consecutive","consensus","consent","consequence","conserve","consider","consign","consignment","consist","consolation","consolatory","console","consolidate","consommé","consonant","consortium","conspectus","conspicuous","conspiracy","conspire","constable","constant","constellation","consternation","constituency","constitute","constitution","constrain","constrict","construe","consul","consult","consume","consummate","contact","contagion","contain","contaminant","contemn","contemplate","contemporize","contempt","contend","content","contention","contest","context","contiguity","contiguous","continence","continent","contingent","continua","continue","continuous","contort","contour","contra","contraband","contraception","contract","contralto","contraption","contrariety","contrary","contrast","contravene","contretemps","contribute","contrite","contrivance","control","controversial","controvert","contumacious","contumely","contusion","conundrum","convalesce","convect","convene","convenience","convent","convention","converge","conversant","converse","conversion","convert","convex","convey","convict","convince","convivial","convoke","convoy","convulse","coo","coocoo","cook","cookey","cool","coop","cooper","coot","copal","cope","copilot","copious","copper","coppice","copra","copse","copter","copula","copy","coquet","coral","corbel","cord","cordage","cordial","cordon","cordovan","corduroy","core","cork","cormorant","corn","cornea","cornelian","corner","cornet","cornice","cornucopia","corny","corolla","corollary","corona","coronation","coroner","corporal","corporate","corps","corpse","corpu","lence","corral","correct","correlate","corridor","corrigendum","corroboree","corrode","corrugate","corrupt","corsage","corsair","corse","cortege","cortex","cortisone","corundum","corvette","cosign","cosily","cosine","cosmic","cosmopolitan","cosmos","cosset","cost","costume","cosy","cotangent","cote","coterie","cotillion","cottage","cotton","cotyledon","couch","cougar","cough","could","coulomb","council","counsel","count","countdown","countenance","counter","counteract","countermand","counterpart","counterpoint","countersign","countess","county","coup","coupe","couple","coupon","courage","courier","course","court","courteous","courtier","courtly","cousin","cove","covenant","cover","coverlet","covert","covet","covey","cow","coward","cower","cowl","cowpoke","coyote","cozy","crab","crabapple","crabbed","crack","crackle","cradle","craft","crag","cram","cramp","cranberry","crane","cranium","crank","cranny","crape","crash","crass","crate","crater","cravat","crave","craven","craw","crawfish","crawl","crayon","craze","crazy","creak","cream","crease","create","creation","creature","creche","credence","credenza","credible","credit","creditor","credo","credulous","creed","creek","creel","creep","cremate","crenellate","creole","creosote","crepuscular","crescendo","crescent","cress","crest","cretaceous","cretin","crevasse","crevice","crew","crib","cricket","cried","crime","crimp","crimson","cringe","crinkle","cripple","crisis","crisp","criss","cross","criterion","critic","critique","croak","crochet","crock","crockery","crocodile","crocus","croissant","crone","crony","crook","croon","crop","crore","crossbow","crotch","crotchet","crouch","croup","crouton","crow","crowd","crown","crucial","crucible","crucifix","crucify","crud","crude","cruel","cruise","crumb","crumble","crumpet","crumple","crunch","crupper","crusade","crush","crust","crustacean","crutch","crux","cry","crypt","cryptic","crystal","cubby","cube","cuckoo","cud","cuddle","cudgel","cue","cuff","cuirass","cuisine","culinary","cull","culminate","culottes","culprit","cultivate","cultural","culture","culvert","cumbersome","cumin","cummerbund","cumulative","cuneiform","cunning","cup","cupboard","cupidity","cupola","cur","curacy","curate","curative","curator","curb","curd","cure","curfew","curio","curiosity","curious","curium","current","curricle","curriculum","curry","curse","cursive","cursor","curt","curtail","curtain","curtsey","curtsy","curvaceous","curvature","curve","cusp","cuss","custard","custodian","custody","custom","cutaneous","cutaway","cute","cuticle","cutlass","cutlery","cutlet","cutoff","cuttlefish","cyclamen","cycle","cyclic","cyclone","cyclopaedia","cyclotron","cygnet","cylinder","cymbal","cynic","cypher","cypress","cyst","czar","dabble","dactyl","dadaism","daffodil","dagger","dago","dahlia","daily","dainty","dairy","dais","daisy","dally","damage","damn","damp","damper","damsel","dance","dandelion","dander","dandle","dandruff","dandy","danger","dangle","danish","dank","dapper","dappled","dare","dark","darken","darkling","darling","darn","dart","dash","dasher","data","date","datum","daub","daughter","daunt","dauphin","davenport","davit","dawdle","dawn","daybreak","daylight","daydream","daze","dazzle","deacon","dead","deaden","deadline","deadlock","deadwood","deaf","deal","dealer","dean","dear","dearly","dearth","death","debacle","debar","debark","debase","debate","debauch","debilitate","debouch","debris","debt","debut","decadence","decagon","decamp","decant","decapitate","decathlon","decay","decease","decedent","decennial","decent","decentralize","deception","decibel","decide","deciduous","decimal","decimate","decipher","deck","declaim","declension","decline","decode","decollate","decollete","decolonize","decommission","decompose","decompress","decongestant","decontrol","decor","decorate","decorous","decoy","decrease","decree","decrepit","decry","decrypt","decumbent","dedicate","deduce","deduct","deed","deem","deep","deer","deface","defalcate","defame","default","defeat","defecate","defect","defence","defend","defer","deference","defiance","defiant","deficiency","deficit","defile","define","definite","deflate","deflect","deflower","defraud","defray","defrock","defrost","deft","defunct","defuse","degenerate","degrade","degrease","degree","degust","dehisce","deify","deign","deity","dejected","delay","delectable","delegate","delete","deleterious","deli","deliberate","delicacy","delicious","delight","delineate","delinquency","deliquesce","delirium","deliver","dell","delouse","delta","deltoid","delude","deluge","delusion","deluxe","delve","demagnetize","demagogue","demand","demarcate","demarche","demean","demeanor","demented","demise","demitasse","demo","demobilize","democracy","demode","demography","demoiselle","demolish","demon","demonstrate","demote","demotic","demulcent","demur","demure","denature","dendrite","dengue","denizen","denominate","denote","denouement","denounce","dense","density","dent","dental","denticle","dentifrice","dentil","dentine","dentist","denture","denude","deny","deodorant","deontology","deoxidize","depart","depend","depict","deplete","deplore","deploy","depone","deport","depose","deposit","depot","deprave","deprecate","depreciate","depredation","depressurize","deprive","depth","depute","deputy","deracinate","derail","derange","derelict","deride","derision","derivation","derivative","derive","dermatology","derogate","derrick","derringer","dervish","descant","descend","describe","descry","desecrate","desegregate","desiccate","desideratum","design","designate","desist","desk","desolate","despatch","desperate","despise","despite","despoil","despondent","despot","dessert","destination","destine","destiny","destitute","destroy","destruct","desuetude","desultory","detach","detail","detain","detect","detente","detention","deter","detergent","deterrence","detest","detonate","detour","detract","detriment","detritus","deuce","deuterium","devastate","develop","deviance","deviate","device","devil","devious","devise","devoid","devolution","devolve","devote","devotee","devout","dew","dextrose","dextrous","diabolic","diadem","diaeresis","diagnose","diagonal","diagram","dial","dialect","dialogue","dialysis","diamante","diameter","diamond","diaper","diaphanous","diaphragm","diarist","diarrhea","diastole","diathermy","diatribe","dibble","dice","dichotomy","dick","dickey","dictum","didactic","diddle","dieresis","diesel","differ","difficult","diffident","diffract","diffuse","dig","digest","digit","dignify","dignitary","dignity","digraph","digress","dike","dilapidate","dilate","dilatory","dilemma","dilettante","diligence","dilute","dimension","diminish","dimple","din","dinar","diner","dinghy","dingle","dingus","dingy","dinky","dinner","dinosaur","dint","diocesan","diode","dioxin","dip","diphtheria","diphthong","diploma","diplomacy","diploid","dipole","dipstick","dire","direct","direful","dirge","dirigible","dirk","dirndl","dirt","disable","disabuse","disaffect","disaffiliate","disagree","disallow","disambiguate","disannul","disappear","disappoint","disapprobation","disarm","disarrange","disarray","disassemble","disavow","disband","disbar","disbelieve","disburden","disburse","disc","discard","discern","discharge","disciple","disciplinarian","disclamation","disclimax","disclose","discolor","discolored","discombobulate","discomfit","discomfort","discommend","discommode","discompose","disconcert","disconnect","disconsolate","discontent","discontinuance","discord","discount","discourage","discourse","discourteous","discover","discredit","discreet","discrepancy","discrete","discretion","discriminate","discursive","discus","discuss","disdain","disease","disembark","disembowel","disenchant","disencumber","disenfranchise","disengage","disentangle","disestablish","disfavor","disfigure","disfranchise","disgorge","disgrace","disgruntle","disguise","disgust","dish","dishabille","dishearten","dishevel","dishonest","dishonor","disillusion","disincentive","disinfect","disingenuous","disinherit","disintegrate","disinter","disinterest","disjoint","disjunctive","disk","dislike","dislimn","dislocate","dislodge","disloyal","dismal","dismantle","dismay","dismember","dismiss","dismount","disobey","disoblige","disorder","disorganize","disorient","disown","disparage","disparate","dispassion","dispatch","dispel","dispensary","dispensation","disperse","dispirit","displace","display","displease","disport","disposable","disposal","dispose","disposition","dispossess","dispraise","disproof","disproportion","disprove","disputable","dispute","disquiet","disquisition","disregard","disrepute","disrespect","disrobe","disrupt","dissatisfaction","dissect","dissemble","disseminate","dissension","dissent","dissenter","dissertation","disservice","dissever","dissident","dissimilar","dissipate","dissociate","dissolute","dissolve","dissonant","dissuade","distaff","distal","distance","distant","distaste","distend","distich","distill","distinct","distort","distract","distrait","distraught","distress","distribute","district","distrust","disturb","disunite","disuse","ditch","ditto","ditty","diurnal","diva","divalent","divan","dive","diverge","diverse","divers","divest","divide","dividend","divination","divine","diving","divinity","divisible","division","divisor","divorce","divot","divulge","divvy","dixieland","dizygotic","dizzy","djellaba","docent","docile","dock","docket","doctor","doctrine","document","dodecagon","dodge","dog","doge","dogear","dogged","doggerel","doggo","doggone","doggy","dogleg","dogma","dogwood","doily","doing","dolce","doldrums","dole","doleful","doll","dollar","dolman","dolomite","dolor","dolour","dolphin","dolt","domain","domal","dome","domestic","domicile","dominance","dominant","dominate","domineer","dominion","domino","don","donjon","donkey","donor","doodle","doomsayer","door","dope","dory","dosage","dose","doss","dossier","dost","dot","dotage","dote","dotterel","dottle","double","doubloon","doubly","doubt","douce","douche","dough","doughty","doula","dour","douse","dove","dovecote","dovetail","dowager","dowd","dowdy","dowel","dower","down","downbeat","downcast","downdraft","downgrade","downhaul","downhearted","downplay","downpour","downright","downriver","downside","downsize","downspout","downstage","downstate","downstream","downstroke","downswing","downtime","downtown","downtrend","downturn","downward","downwind","dowry","doxology","doyen","doze","dozen","drab","drachma","draconian","draft","drag","draggle","dragnet","dragoman","dragon","dragoon","drain","drake","dram","drama","dramaturge","draught","draw","drawback","drawbridge","drawl","drawn","dray","dread","dreadful","dream","dreamt","dreamy","dreary","dredge","dreg","drench","dress","dresser","drey","drib","dribble","drier","drift","drill","drink","drip","drivel","driven","drizzle","dromedrone","drone","drool","droop","drop","droplet","dropout","dropsy","droshky","dross","drought","drouth","drove","drover","drown","drowse","drub","drudge","drug","druggist","drugstore","druid","drum","drumbeat","drumlin","drunk","drunkard","dry","dryad","dryer","drysalter","dual","dub","dubbin","dubiety","ducal","ducat","duce","duchess","duchy","duck","duckbill","duckling","duct","ductile","dud","dude","dudgeon","due","duel","duenna","duet","duff","duffer","dugout","duke","dukedom","dulcet","dulcimer","dull","duly","dumb","dumbbell","dumbfound","dumdum","dummy","dump","dumps","dumpy","dun","dunce","dunderhead","dune","dung","dungarees","dungeon","dunlin","dunnage","dunning","dunt","duo","duodecimal","duodenum","duologue","dupe","duplex","duplicate","duplicity","durable","durance","duration","duress","durian","during","durum","dusk","duskiness","dusky","dust","dutch","duty","duvet","dwarf","dwarfish","dwell","dwindle","dyad","dye","dyer","dying","dyke","dynamic","dynamism","dynamite","dynamo","dynast","dynasty","dyne","dysentery","dyslexia","dyspepsia","dysprosium","dystrophy","eagle","eaglet","ear","earache","eardrum","earl","earlap","earldom","early","earmark","earn","earnest","earphone","earring","earth","earthy","earwig","easel","easement","east","easterly","easy","eat","eave","eavesdrop","ebbtide","ebony","ebullience","eccentric","ecclesiastic","echelon","echidna","echinus","echo","eclair","eclipse","ecliptic","ecocide","ecology","economize","ecru","ecstasy","ectoderm","edam","eddy","edelweiss","edema","eden","edge","edgeways","edgewise","edgy","edibility","edict","edification","edifice","edify","edit","edition","editor","editorial","educate","educe","eel","eerie","efface","effect","effects","effeminate","effendi","efferent","effete","efficacious","efficacy","efficiency","effigy","effluent","effluvium","efflux","effort","effrontery","effulgence","effusion","egalitarian","egret","eider","eiderdown","eight","einsteinium","eire","either","ejaculate","eject","eke","elan","eland","elaborate","elapse","elastic","elate","elbow","elder","elderly","eldritch","elect","election","elective","electoral","electorate","electric","electrify","electro","electrocute","electrode","electrolyte","electromagnet","electron","elegant","elegiac","elegy","element","elephant","elevate","eleven","elf","elfin","elicit","elide","eligible","eliminate","elision","elite","elixir","elk","ell","ellipse","ellipsis","elm","elocution","elongate","elope","eloquent","else","elucidate","elude","elusive","elver","emaciate","emanate","emancipate","emasculate","embalm","embankment","embargo","embark","embarrass","embassy","embattled","embed","embellish","ember","embezzle","embitter","emblazon","emblem","embolden","embolism","emboss","embrace","embrasure","embrocation","embroider","embroil","embryo","emcee","emend","emerald","emerge","emeritus","emery","emetic","emigrant","emigrate","eminence","eminent","emir","emirate","emissary","emission","emit","emollient","emolument","emotion","emotive","empathy","emperor","emphases","emphasis","emphatic","emphysema","empire","empirical","emplace","employ","empower","empress","empty","empyrean","emulate","emulsify","enable","enact","enamel","enamor","encamp","encapsulate","encase","encaustic","encephalon","enchain","enchant","enchase","enchilada","enchiridion","encircle","enclave","enclose","encode","encomium","encompass","encore","encounter","encourage","encroach","encrust","encrypt","encumber","encyclical","encyclopedia","end","endanger","endear","endeavor","endemic","endive","endlong","endmost","endocrine","endogenous","endorse","endow","endue","endurable","endurance","enema","enemy","energetic","energy","enervate","enfeeble","enfilade","enfold","enforce","enfranchise","engage","engender","engine","engineer","engird","engraft","engrain","engrave","engross","engulf","enhance","enigma","enjambment","enjoin","enjoy","enlarge","enlighten","enlist","enliven","enmesh","enmity","ennoble","ennui","enology","enophile","enormity","enough","enounce","enquire","enrage","enrapture","enrich","enrol","enroot","ensconce","ensemble","enshrine","enshroud","ensign","enslave","ensnare","ensue","ensure","entail","entangle","entente","enter","enterprise","entertain","enthrall","enthrone","enthusiasm","entice","entire","entitle","entity","entomb","entomology","entourage","entrails","entrain","entrance","entrant","entrap","entreat","entree","entrench","entrepreneur","entropy","entrust","entry","entwine","enumerate","enunciate","enure","envelop","envelope","envenom","enviable","envious","environ","envisage","envoy","envy","enzyme","eon","epaulet","ephebe","ephemera","epic","epicene","epicure","epicycle","epidemic","epidermis","epiglottis","epigram","epigraph","epilepsy","epilogue","episcopacy","episode","episodic","epistle","epitaph","epithet","epitome","epoch","eponym","equable","equal","equanimity","equate","equator","equerry","equestrian","equidistant","equilateral","equilibrium","equine","equinox","equip","equipoise","equitable","equity","equivalent","equivocal","equivocate","era","eradicable","erase","eraser","erbium","ere","erect","erelong","eremite","erewhile","erg","ergo","ergonomics","ermine","erode","erogenous","eros","erose","erosion","erotic","err","errand","errant","errata","erratic","erratum","erroneous","ersatz","erstwhile","eruct","erudite","erupt","escalate","escapade","escape","escapism","escargot","escarole","escarp","escarpment","eschatology","eschew","escort","escrow","escudo","esculent","escutcheon","esker","esophagus","esoteric","espadrille","espalier","especial","espionage","esplanade","espresso","esprit","esquire","essay","essence","essential","establish","estate","esteem","esthete","esthetic","estimate","estrange","estuarine","estuary","esurient","eta","etching","eternal","ether","ethereal","ethic","ethnicity","ethos","ethyl","etiology","etiquette","etude","etymology","eucalyptus","euchre","eugenic","eulogist","eulogy","eunuch","euphemism","euphony","euphoria","eureka","euro","europium","eurythmy","eutectic","euthanasia","evacuate","evade","evaluate","evanescent","evangelist","evaporate","evasion","eve","even","evening","evensong","event","eventual","ever","evergreen","everlasting","every","evict","evidence","evident","evil","evince","evoke","evolution","evolve","ewe","exacerbate","exact","exalt","exam","examine","example","exasperate","excavate","exceed","excel","except","exception","excerpt","excess","exchange","exchequer","excise","excision","excite","exclaim","exclave","excommunicate","excoriate","excrement","excrescence","excreta","excrete","excruciating","exculpate","excursion","excursive","excursus","excusable","excuse","exdirectory","execrable","execute","executive","executor","executrix","exegesis","exegete","exemplar","exemplary","exemplify","exempt","exequatur","exercise","exert","exhale","exhaust","exhibit","exhilarate","exhort","exhume","exigency","exile","exist","exit","exodus","exogenous","exonerate","exorbitant","exorcise","exordium","exoskeleton","exotic","expand","expanse","expansile","expatiate","expatriate","expect","expectorant","expedient","expedite","expedition","expeditious","expel","expend","expense","expensive","experience","experiment","expert","expiate","expire","explain","explant","expletive","explicable","explicate","explicit","explode","exploit","exploration","exponent","export","expose","exposition","expository","expostulate","exposure","expound","express","expulsion","exquisite","extant","extemporaneous","extend","extension","extensive","extent","extenuate","exterior","exterminate","external","extinct","extirpate","extol","extort","extra","extract","extradite","extrajudicial","extramarital","extramural","extraneous","extraordinary","extrapolate","extrasensory","extraterritorial","extravagant","extricate","extrinsic","extrovert","extrude","exuberant","exudate","exude","exult","exurb","exuviae","eye","eyeball","eyelet","eyeshade","eyesight","eyesore","eyetooth","eyewash","eyewitness","fabaceous","fable","fabric","fabricate","fabulous","facade","facet","facetious","facia","facial","facile","facsimile","fact","faction","factious","factitious","factor","factorial","factory","factotum","factual","faculty","fad","fade","fadge","faeces","faerie","faff","fag","faggot","fagot","fahrenheit","faience","fail","failure","fain","faineant","faint","fair","fairground","fairly","fairness","fairy","faith","faithless","falafal","falcon","falconer","falconry","fall","fallacious","fallacy","fallback","fallen","fallible","falloff","fallout","fallow","false","falsies","falsify","falsetto","falsity","faltboat","falter","fame","familial","familiar","family","famine","famish","famous","famulus","fan","fanatic","fancier","fanfare","fang","fanlight","fanny","fantail","fantasia","fantasize","fantasy","fantod","far","farad","faraway","farce","farcical","fare","farewell","farfetched","farina","farm","farmer","farmhouse","farming","faro","farrago","farrier","farrow","fart","farther","farthest","farthing","fascia","fascicle","fascinate","fascine","fascism","fashion","fast","fastback","fasten","fastidious","fastness","fat","fatal","fate","fateful","father","fathom","fatigue","fatling","fatness","fatten","fattish","fatty","fatuity","fatuous","faucet","fault","faun","fauna","faute","fauteuil","faux","fava","favela","favor","favorite","favoritism","favus","fawn","fay","faze","fealty","fear","fearful","fearless","fearsome","feasance","feasible","feast","feat","feather","feature","febrile","fecal","fecund","fed","federal","federate","fee","feeble","feed","feedback","feel","feeling","feet","feign","feint","feisty","felicitate","felicitous","felicity","feline","fell","fellow","fellowship","felon","felony","felt","female","feme","feminine","feminism","femme","femoral","femur","fen","fence","fencer","fend","fender","fenestration","fennec","fennel","fenugreek","feoff","ferment","fermium","fern","ferocious","ferocity","ferret","ferric","ferrous","ferrule","ferry","fertile","fervent","fervid","fervor","fescue","fess","festal","fester","festival","festive","festoon","fetal","fetch","fetching","fete","fetial","fetid","fetish","fetlock","fetter","fettle","fetus","feud","feudal","feudalism","feuilleton","fever","few","fey","fez","fiance","fiasco","fiat","fib","fibber","fiber","fibre","fibril","fibrin","fibroid","fibroma","fibrous","fibula","fiche","fichu","fickle","fiction","fictitious","fiddle","fidelity","fidget","fiduciary","fie","fief","field","fiend","fierce","fiery","fiesta","fife","fifteen","fifth","fifties","fifty","fig","figment","figurative","figure","figurine","filament","filaria","filbert","filch","filet","filial","filibuster","filigree","filing","fill","fillet","fillip","filly","film","filmdom","filmy","fils","filter","filth","filtrate","finale","finch","find","finder","finding","fine","finery","finesse","finial","finick","finger","finis","finite","finitude","finn","fink","finny","fiord","fir","fire","firearm","fireball","firebird","fireboat","firebox","firebrand","firebreak","firebrick","firebug","firecracker","firefly","fireguard","firehouse","firelight","fireman","fireplug","firepower","fireproof","firkin","firm","firmament","firmware","first","firth","fiscal","fish","fishbowl","fisher","fisherman","fishery","fishhook","fishmonger","fishnet","fishwife","fishy","fissile","fission","fissure","fist","fistula","fit","fitful","fitment","fitten","fitter","fitting","five","fiver","fives","fix","fixation","fixative","fixed","fixings","fixture","fizz","fizzle","fjord","flab","flabbergast","flabby","flaccid","flacon","flag","flagella","flagellate","flagellum","flageolet","flagged","flagging","flagon","flagpole","flagrant","flagstaff","flagstone","flail","flair","flak","flake","jacket","flaky","flam","flambe","flamboyant","flame","flamen","flaming","flamingo","flammable","flan","flaneur","flange","flank","flannel","flannelette","flanerie","flap","flapjack","flapper","flare","flash","flashback","flasher","flashy","flask","flat","flatbed","flatboat","flatcar","flatfish","flatfoot","flatiron","flatland","flatling","flatmate","flatness","flatted","flatten","flatter","flattery","flattop","flatus","flatware","flaunt","flautist","flavin","flavor","flavour","flaw","flax","flaxen","flay","flea","fleabag","fleck","fledgling","flee","fleece","fleecy","fleet","fleeting","flesh","fleshy","fletcher","fleur","flew","flex","flexible","flexion","flexor","flextime","flibbertigibbet","flick","flicker","flight","flimflam","flimsy","flinch","flinders","fling","flint","flintlock","flinty","flip","flippant","flipper","flirt","flit","flitch","flivver","float","floc","floccus","flock","floe","flog","flood","floodgate","floodlight","floor","floozy","flop","floppy","flora","floral","florid","florist","floss","flotation","flotilla","flotsam","flounce","flounder","flour","flourish","floury","flout","flow","flower","flowery","flown","flu","flub","fluctuate","flue","fluency","fluent","fluff","fluffy","fluid","fluidity","fluke","flume","flummery","flummox","flung","flunk","flunky","fluoresce","fluoride","fluorine","fluorite","fluorocarbon","flurry","flush","fluster","flute","flutist","flutter","fluvial","flux","fluxion","fly","flyaway","flyblown","flyby","flyer","flyleaf","flyover","flypaper","flyspeck","flyway","flyweight","flywheel","foal","foam","foamy","fob","focal","foci","focus","fodder","foe","fog","foggy","foghorn","fogy","foible","foil","foist","folate","fold","folder","foliage","foliar","folio","folk","folklore","folksy","follicle","follow","folly","foment","fond","fondant","fondle","fondue","font","fontanel","food","fool","foolery","foolhardy","foolish","foolproof","foot","footage","football","footboard","footbridge","footed","footer","footfall","foothill","foothold","footing","footle","footlights","footling","footlocker","footloose","footman","footmark","footnote","footpad","footpath","footprint","footrace","footrest","footrope","footsie","footsore","footstep","footstool","footway","footwear","footwork","fop","for","forage","foray","forbear","forbearance","forbid","forbidden","forbidding","forborne","force","forced","forceful","forcemeat","forceps","forcible","ford","fore","forearm","forebear","foreboding","forecast","foreclose","forecourt","foredoom","forefather","forefinger","forefoot","forefront","forego","foregoing","foregone","foreground","forehand","forehead","foreign","foreknowledge","foreland","foreleg","forelimb","forelock","foreman","foremast","foremost","forename","forenoon","forensic","foreordain","forepart","forepaw","foreplay","forequarter","forerun","foresail","foresaw","foresee","foreshadow","foreshorten","foresight","foreskin","forestall","forester","forestry","foretaste","foretell","forethought","foretoken","forever","forewarn","forewent","foreword","forfeit","forfeiture","forgather","forgave","forge","forgery","forget","forgetful","forgetive","forgive","forgiven","forgiveness","forgiving","forgo","forgot","forgotten","fork","forked","forkful","forlorn","form","formal","formaldehyde","formality","formalize","format","formate","formation","formative","former","formerly","formfitting","formic","formication","formidable","forming","formless","formula","formulae","formulate","formwork","fornication","fornix","forsake","forsooth","forswear","forsythia","fort","forte","fortescue","forth","forthcoming","forthright","forthwith","forties","fortieth","fortification","fortify","fortissimo","fortitude","fortnight","fortress","fortuitous","fortunate","fortune","forty","forum","forward","forwarder","fossil","fossorial","foster","fought","foul","foulard","found","foundation","founder","foundling","foundry","fount","fountain","four","fourchette","fourfold","fourposter","foursome","foursquare","fourteen","fourth","fovea","fowl","fox","foxglove","foxhole","foxhound","foxtrot","foxy","foyer","fracas","fraction","fractious","fracture","fragile","fragment","fragrance","fragrant","frail","frailty","fraise","frambesia","frame","framework","franc","franchise","francium","frangipani","frank","frankfurter","frankincense","franklin","frankly","frantic","frappe","fraternal","fraternity","fratricide","fraud","fraudster","fraught","fray","frayed","freak","freckle","free","freebie","freeboot","freedman","freedom","freehand","freehold","freelance","freeloader","freeman","freemason","freesia","freestyle","freeware","freeway","freewheel","freewill","freeze","freezer","freight","frenetic","frenzy","freon","frequent","fresco","freshet","fresh","freshman","freshwater","fret","fretful","fretwork","friable","friar","friary","fricassee","fricative","frication","friction","friday","fridge","fried","friend","friendly","friendship","frieze","frigate","frigging","fright","frighten","frightful","frigid","frill","frilly","fringe","fringing","frippery","frisbee","frisk","frisky","frisson","fritter","frivolity","frivolous","frizz","fro","frock","frog","frogging","frogman","frolic","from","frond","front","frontage","frontal","frontier","frontispiece","frontlet","frosh","frost","frostbite","frosty","froth","frothy","froufrou","froward","frown","frowsty","froze","frozen","fructose","frugal","fruit","fruitful","fruition","fruitless","fruity","frump","frumpy","frustrate","frustum","fry","fuchsia","fuck","fuddle","fudge","fuehrer","fuel","fug","fugitive","fugue","fuhrer","fulcrum","fulfil","full","fullback","fuller","fully","fulmar","fulminate","fulsome","fumble","fume","fumigant","fumigate","fumitory","fun","function","fund","fundamental","funeral","funerary","funereal","fungal","fungi","fungible","fungicide","fungoid","fungus","funicular","funiculus","funk","funnel","funny","fur","furbelow","furbish","furcate","furfural","furious","furl","furlong","furlough","furnace","furnisher","furniture","furor","furore","furrier","furrow","furry","further","furthest","furtive","fury","furze","fuse","fuselage","fusible","fusil","fusillade","fusion","fuss","fussbudget","fussy","fustian","fusty","futile","futon","future","futurism","futurity","futurologist","fuze","fuzz","fuzzy","gab","gabardine","gabble","gabbro","gaberlunzie","gable","gabon","gad","gadabout","gadder","gadfly","gadget","gadoid","gadwall","gaff","gaffe","gaffer","gag","gaga","gage","gaggle","gaiety","gaily","gain","gainful","gainsay","gait","gaiter","gal","gala","galactose","galaxy","gale","gall","gallant","gallbladder","galleon","gallery","galley","gallimaufry","gallinaceous","galling","galliot","gallium","gallivant","gallnut","gallon","gallop","gallows","gallstone","galoot","galop","galore","galoshes","galumph","galvanic","galvanize","galvanized","gambit","gamble","gambol","gambrel","gamete","gamic","gamine","gaming","gamma","gammon","gamut","gander","gang","gangbang","gangland","ganglia","gangling","ganglion","gangplank","gangrene","gangster","gangway","gannet","gant","gantlet","gantry","gaol","gap","gape","gar","garage","garb","garbage","garble","garcon","garden","garderobe","gargantuan","gargle","gargoyle","garibaldi","garish","garland","garlic","garment","garn","garnet","garnish","garotte","garret","garrison","garrote","garrotte","garter","gas","gaseous","gash","gasket","gaslight","gasohol","gasoline","gasometer","gasp","gassed","gassiness","gassy","gastrectomy","gastric","gastritis","gastroenteritis","gastronome","gastronomy","gastropod","gasworks","gate","gateau","gatehouse","gatekeeper","gatepost","gateway","gather","gauche","gaucherie","gaucho","gaud","gaudy","gauge","gaunt","gauntlet","gauss","gauze","gavage","gave","gavel","gavotte","gawk","gawky","gay","gaze","gazebo","gazelle","gazette","gazetteer","gazpacho","gear","gearshift","gecko","gee","geezer","geisha","gel","gelatin","gelation","gelding","gelid","gelignite","gem","geminate","gemini","gemstone","gendarme","gender","gene","genealogist","genealogy","genera","general","generate","generation","generative","generator","generic","generosity","generous","genesis","genetic","genet","genial","genie","genii","genital","genitive","genius","genocidal","genocide","genome","genre","gent","genteel","gentian","gentile","gentility","gentle","gentleman","gentry","genuflect","genuine","genus","geode","geodesic","geodetic","geographer","geography","geologic","geologist","geology","geomancer","geomancy","geometry","geophysics","geopolitics","georgetown","georgette","georgic","geostationary","geosyncline","geothermal","geranium","gerbil","gerfalcon","geriatric","germ","german","germanium","germicide","germinal","germinate","gerontology","gerund","gesso","gestalt","gestapo","gestate","gestation","gesticulate","gesture","gesundheit","get","getaway","getup","gewgaw","geyser","gharial","ghastly","ghat","gherkin","ghetto","ghillie","ghost","ghostly","ghoul","ghyll","giant","gibber","gibberish","gibbet","gibbon","gibbous","gibe","giblets","giddap","giddy","gift","gig","gigabyte","gigahertz","gigantic","giggle","gigolo","gimbal","gimcrack","gimlet","gimmick","gimp","gin","ginger","gingerbread","gingery","gingham","gingivitis","ginkgo","ginormous","ginseng","gip","gipsy","giraffe","girandole","gird","girder","girdle","girl","girlie","girlish","girly","girt","girth","gist","give","given","gizmo","gizzard","glabrous","glace","glacial","glaciate","glacier","glaciologist","glad","gladden","glade","gladiator","gladiolus","gladly","glamor","glamorize","glamorous","glamour","glance","gland","glanders","glandular","glare","glary","glass","glassblower","glasses","glassful","glasshouse","glassware","glassy","glaucoma","glaze","glazed","glazier","gleam","glean","glebe","glee","gleeful","glen","glengarry","gliadin","glib","glimmer","glimpse","glint","glissade","glissando","glisten","glitch","glitter","glitz","gloat","glob","global","globe","globin","globoid","globular","globule","globulin","glocal","glockenspiel","glomerate","glomerular","gloom","gloomy","glop","glorify","glorious","glory","gloss","glossary","glossolalia","glossy","glottal","glottis","glove","glow","glower","glowing","glucose","glue","gluey","glug","glum","glut","gluten","glutinous","glutton","glycerin","glycerol","glycogen","glycol","glyph","glyptics","gnarl","gnarled","gnash","gnat","gnathic","gnaw","gneiss","gnocchi","gnome","gnomic","gnomon","gnosis","gnostic","gnotobiotic","gnu","go","goa","goad","goal","goalie","goalkeeper","goaltender","goat","goatee","goatherd","goatskin","gob","gobbet","gobble","goblet","goblin","gobo","gobsmacked","goby","goddamn","goddess","godfather","godhead","godless","godlike","godly","godmother","godparent","godspeed","goer","gofer","goggle","gogo","goiter","gold","goldbrick","goldcrest","golden","goldfinch","goldfish","goldsmith","golf","goliard","gondola","gondolier","gone","goner","gong","goniometer","gonorrhea","goo","goober","good","goodbye","goodie","goodly","goodness","goodwill","goody","gooey","goof","goofy","googol","gook","goon","goosander","goose","gooseneck","gopher","goral","gordian","gore","gorge","gorgeous","gorget","gorgon","gorgonzola","gorilla","gorse","gory","gosh","goshawk","gosling","gospel","gossamer","gossip","got","gotcha","goth","gouache","gouda","gouge","goulash","gourami","gourd","gourde","gourmand","gourmet","gout","govern","governess","governor","gown","grab","grabber","graben","grace","graceful","graceless","gracious","grackle","grad","gradate","grader","gradient","gradine","gradual","graduate","gradus","graffiti","graffito","graft","grail","grain","grained","grainy","gram","gramercy","grammar","grammatic","granary","grand","grandam","grandaunt","grandchild","granddad","granddaughter","grandeur","grandfather","grandiloquent","grandiose","grandma","grandmother","grandnephew","grandness","grandpa","grandparent","grandsire","grandson","grandstand","granduncle","grange","granite","granitic","granny","granola","grant","granular","granulate","granule","granulite","grape","grapefruit","grapevine","graph","graphic","graphite","graphology","grapnel","grapple","grasp","grass","grasshopper","grassland","grassroots","grate","grateful","gratification","gratify","gratin","gratis","gratitude","gratuitous","gratuity","grave","gravel","gravely","graven","gravenstein","graver","graveside","gravestone","graveyard","gravitas","gravitate","gravity","gravy","gray","graybeard","grayling","graze","grease","greasy","great","greatcoat","greathearted","greatly","greave","grebe","grecian","greed","greedy","greek","green","greenback","greenery","greenfield","greengage","greengrocer","greenhouse","greening","greenish","greenland","greens","greenstick","greenth","greenwood","greet","greeter","gregarious","gremlin","gremlins","grenade","grenadier","grenadine","grew","grey","greyhound","greylag","grid","griddle","gridiron","gridlock","grief","grievance","grieve","grievous","griffin","griffon","grig","grill","grille","grillwork","grim","grimace","grimalkin","grime","grin","grind","grinder","grindstone","gringo","grip","gripe","grippe","gripper","gripsack","grisaille","grisly","grist","gristle","gristmill","grit","grits","gritty","grizzled","grizzly","groan","groat","grocer","grocery","grog","groggy","grogram","groin","grommet","groom","groove","groovy","grope","grosbeak","groschen","grosgrain","gross","grosz","grotesque","grotto","grouch","grouchy","ground","groundhog","groundless","groundling","groundnut","grounds","groundsel","groundsheet","groundsman","groundwork","group","grouper","groupie","grouse","grout","grove","grovel","grow","grower","growing","growl","growler","grown","grownup","growth","groyne","grub","grubby","grubstake","grudge","gruel","gruesome","gruff","grumble","grump","grumpy","grunge","grunion","grunt","gryphon","guacamole","guanaco","guanethidine","guanine","guano","guar","guarantee","guarantor","guaranty","guard","guarded","guardian","guardianship","guava","gubernatorial","guck","gudgeon","guerdon","guernsey","guerrilla","guess","guesswork","guest","guff","guffaw","guide","guideline","guidon","guild","guilder","guile","guillemot","guilloche","guillotine","guilt","guilty","guimpe","guinea","guineafowl","guipure","guise","guitar","guitarist","gulag","gulch","gullet","gull","gullible","gully","gulp","gum","gumbo","gumboil","gumdrop","gummy","gumption","gumshoe","gun","gunboat","guncotton","gunfight","gunfire","gunge","gunk","gunlock","gunman","gunmetal","gunnel","gunner","gunnery","gunning","gunny","gunnysack","gunplay","gunpoint","gunpowder","gunrunner","gunrunning","gunship","gunshot","gunslinger","gunsmith","gunstock","gunwale","guppy","gurgle","gurnard","gurney","guru","gush","gusher","gushy","gusset","gust","gustatory","gusty","gut","gutbucket","gutless","guts","gutsy","gutta","guttate","gutter","guttural","guv","guy","guzzle","gwyniad","gybe","gym","gymkhana","gymnast","gymnastics","gymnosperm","gynecology","gypsum","gyrate","gyrfalcon","gyro","gyrocompass","gyroscope","gyve"];
+function wordList(){ return $("#lang").value==="en"?WL_EN:WL_RU; }
+let entropyOverride=null; // точная энтропия сгенерированного значения
+
+function updateWordInfo(){
+  const n=+$("#wcount").value, wl=wordList();
+  const bits=Math.log2(wl.length);
+  let total=n*bits;
+  if($("#addDigit").checked) total+=Math.log2(10);
+  if($("#sep").value==="digit") total+=Math.log2(10);
+  $("#wdesc").textContent=`${wl.length.toLocaleString("ru")} слов • ${bits.toFixed(1)} бит/слово • фраза ≈ ${total.toFixed(0)} бит`;
+}
+
+/* ---------- генераторы ---------- */
+function genPassword(){
+  const len=+$("#len").value;
+  const U=$("#useUpper").checked, L=$("#useLower").checked, D=$("#useDigits").checked, S=$("#useSymbols").checked;
+  const noAmb=$("#noAmb").checked;
+  let up=noAmb?"ABCDEFGHJKLMNPQRSTUVWXYZ":"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let lo=noAmb?"abcdefghijkmnpqrstuvwxyz":"abcdefghijklmnopqrstuvwxyz";
+  let di=noAmb?"23456789":"0123456789";
+  let sy=($("#symCustom").value||"!@#$%^&*").split("");
+  const sets=[];
+  if(U) sets.push(up.split(""));
+  if(L) sets.push(lo.split(""));
+  if(D) sets.push(di.split(""));
+  if(S) sets.push(sy);
+  if(!sets.length) sets.push(lo.split(""));
+  const pool=sets.flat();
+  entropyOverride=len*Math.log2(pool.length);
+  let chars=[];
+  if($("#mustAll").checked) for(const st of sets) chars.push(st[randInt(st.length)]);
+  while(chars.length<len) chars.push(pool[randInt(pool.length)]);
+  return shuffle(chars).slice(0,len).join("");
+}
+function genPhrase(){
+  const n=+$("#wcount").value;
+  const sepMode=$("#sep").value;
+  const cap=$("#capWords").checked, addD=$("#addDigit").checked;
+  const wl=wordList();
+  let words=[], prev=-1;
+  for(let i=0;i<n;i++){
+    let idx;
+    do{ idx=randInt(wl.length); }while(idx===prev);
+    prev=idx;
+    let w=wl[idx];
+    if(cap) w=w[0].toUpperCase()+w.slice(1);
+    words.push(w);
+  }
+  const bits=Math.log2(wl.length);
+  entropyOverride=n*bits;
+  let sep=sepMode;
+  if(sepMode==="digit"){ sep=String(randInt(10)); entropyOverride+=Math.log2(10); }
+  let phrase=words.join(sep);
+  if(addD){ phrase+=randInt(10); entropyOverride+=Math.log2(10); }
+  return phrase;
+}
+function genToken(){
+  const type=$("#tokType").value;
+  if(type==="uuid"){
+    entropyOverride=122; // 6 бит × 122? нет: 16 байт минус 6 бит версии/варианта
+    const b=randBytes(16);
+    b[6]=(b[6]&0x0f)|0x40; b[8]=(b[8]&0x3f)|0x80;
+    const h=[...b].map(x=>x.toString(16).padStart(2,"0")).join("");
+    return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+  }
+  if(type==="pin"){
+    const n=+$("#pinLen").value;
+    entropyOverride=n*Math.log2(10);
+    let s="";
+    for(let i=0;i<n;i++) s+=randInt(10);
+    return s;
+  }
+  const n=+$("#tokLen").value;
+  if(type==="hex"){
+    entropyOverride=n*4;
+    let s="";
+    const b=randBytes(Math.ceil(n/2));
+    for(const x of b) s+=x.toString(16).padStart(2,"0");
+    return s.slice(0,n);
+  }
+  entropyOverride=Math.floor(n*3/4)*8;
+  const b=randBytes(Math.ceil(n*3/4));
+  let s="";
+  const CH="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for(let i=0;i<b.length;i+=3){
+    const x=(b[i]<<16)|((b[i+1]||0)<<8)|(b[i+2]||0);
+    s+=CH[(x>>18)&63]+CH[(x>>12)&63]+CH[(x>>6)&63]+CH[x&63];
+  }
+  if(type==="b64url"){ s=s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+  return s.slice(0,n);
+}
+
+/* ---------- анализ надёжности ---------- */
+const COMMON=["123456","password","12345678","qwerty","123456789","12345","1234","111111","1234567","dragon","123123","baseball","abc123","football","monkey","letmein","shadow","master","666666","qwertyuiop","123321","mustang","1234567890","michael","654321","superman","1qaz2wsx","7777777","freedom","qazwsx","trustno1","jordan","jennifer","zxcvbnm","asdfgh","hunter","buster","soccer","harley","batman","andrew","tigger","sunshine","iloveyou","fuckyou","2000","charlie","robert","thomas","hockey","ranger","daniel","starwars","klaster","112233","пароль","йцукен","йцукен123","чебурашка","дельфин","матрешка","солнце","марина","александр","qwe123","qweasd"];
+const SEQS=["abcdefghijklmnopqrstuvwxyz","0123456789","qwertyuiop","asdfghjkl","zxcvbnm","йцукенгшщзхъ","фывапролджэ"];
+function plural(n,f){ const a=Math.abs(n)%100,b=a%10; if(a>10&&a<20)return f[2]; if(b>1&&b<5)return f[1]; if(b===1)return f[0]; return f[2]; }
+function humanTime(t){
+  if(t<1) return "меньше секунды";
+  const u=[[["секунда","секунды","секунд"],1],[["минута","минуты","минут"],60],[["час","часа","часов"],3600],[["день","дня","дней"],86400],[["год","года","лет"],31557600],[["век","века","веков"],3155760000],[["тысячелетие","тысячелетия","тысячелетий"],3155760000000]];
+  for(let i=u.length-1;i>=0;i--){
+    if(t>=u[i][1]){ const v=Math.round(t/u[i][1]); return `${v} ${plural(v,u[i][0])}`; }
+  }
+  return "меньше секунды";
+}
+function analyze(pw, override){
+  if(!pw) return {level:0,entropy:0,verdict:"—",bits:"",crack:"",warn:[]};
+  const warn=[];
+  let entropy;
+  if(override!=null){
+    entropy=override;
+  }else{
+    const lower=pw.toLowerCase();
+    let pool=0;
+    if(/[a-z]/.test(pw)) pool+=26;
+    if(/[A-Z]/.test(pw)) pool+=26;
+    if(/[0-9]/.test(pw)) pool+=10;
+    if(/[^a-zA-Z0-9]/.test(pw)) pool+=33;
+    if(/[а-яё]/i.test(pw)) pool+=33;
+    if(pool===0) pool=1;
+    entropy=pw.length*Math.log2(pool);
+    if(COMMON.includes(lower)){ entropy=Math.min(entropy,10); warn.push("❌ Пароль входит в список самых распространённых — взламывается за секунды"); }
+    outer: for(let i=0;i+4<=lower.length;i++){
+      const sub=lower.slice(i,i+5);
+      for(const s of SEQS){ if(s.includes(sub)){ warn.push(`⚠️ Содержит последовательность клавиш («${sub}»)`); entropy-=8; break outer; } }
+    }
+    if(/(.)\1{2,}/.test(pw)){ warn.push("⚠️ Есть повторяющиеся символы подряд"); entropy-=5; }
+    if(/^(.{2,4})\1+$/.test(pw)){ warn.push("⚠️ Пароль состоит из повторяющегося фрагмента"); entropy-=10; }
+    if(/^(19|20)\d{2}$/.test(pw)||/^\d{4,8}$/.test(pw)){ warn.push("⚠️ Похоже на дату или просто число"); entropy-=6; }
+    entropy=Math.max(entropy,0);
+  }
+  let level, verdict;
+  if(entropy<28){ level=1; verdict="Очень слабый"; }
+  else if(entropy<45){ level=2; verdict="Слабый"; }
+  else if(entropy<65){ level=3; verdict="Средний"; }
+  else if(entropy<85){ level=4; verdict="Хороший"; }
+  else if(entropy<112){ level=5; verdict="Сильный"; }
+  else { level=5; verdict="Очень сильный"; }
+  if(override==null && COMMON.includes(pw.toLowerCase())){ level=1; verdict="Взломан за секунды"; }
+  const avg=Math.pow(2,entropy-1);
+  const fast=avg/1e10, online=avg/10;
+  const crack=`Среднее время подбора: <b>${humanTime(fast)}</b> (офлайн-атака, 10 млрд/с) • <b>${humanTime(online)}</b> (онлайн, 10/с)`;
+  return {level,entropy,verdict,bits:`Энтропия: ≈${entropy.toFixed(1)} бит • пространство: 2^${entropy.toFixed(0)}`,crack,warn:[...new Set(warn)]};
+}
+function renderAnalysis(a){
+  $$(".meter i").forEach((el,i)=>{ el.className=""; if(a.level>=i+1) el.classList.add("f"+(i+1)); });
+  const v=$("#verdict"); v.textContent=a.verdict;
+  v.style.color=["","var(--danger)","var(--warn)","#e8d44d","var(--accent2)","#2ee6a8"][a.level]||"var(--text)";
+  $("#bits").textContent=a.bits;
+  $("#crack").innerHTML=a.crack;
+  $("#warnings").innerHTML=a.warn.map(w=>`<li>${w}</li>`).join("");
+}
+
+/* ---------- основной цикл ---------- */
+let lastValue="", lastType="";
+function currentType(){ return $(".tab.on[data-p]")?.dataset.p||"pPass"; }
+function generate(){
+  const t=currentType();
+  entropyOverride=null;
+  let val,typeName;
+  if(t==="pPass"){ val=genPassword(); typeName="Пароль"; }
+  else if(t==="pPhrase"){ val=genPhrase(); typeName="Фраза"; }
+  else if(t==="pToken"){ val=genToken(); typeName="Токен"; }
+  else return;
+  lastValue=val; lastType=typeName;
+  $("#out").textContent=val;
+  renderAnalysis(analyze(val,entropyOverride));
+  addHistory(val,typeName);
+}
+$("#genBig").onclick=generate;
+$$(".tab[data-p]").forEach(b=>b.onclick=()=>{
+  $$(".tab[data-p]").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  $$(".panel").forEach(p=>p.classList.remove("on"));
+  $("#"+b.dataset.p).classList.add("on");
+  if(b.dataset.p==="pCheck"){ $("#out").textContent=$("#checkInput").value||"—"; renderAnalysis(analyze($("#checkInput").value)); }
+  else generate();
+});
+$("#copyBtn").onclick=()=>copyText(lastValue||$("#out").textContent);
+
+/* ползунок + числовое поле */
+function bindPair(sliderId,numId){
+  const sl=$("#"+sliderId), num=$("#"+numId);
+  sl.addEventListener("input",()=>{ num.value=sl.value; updateWordInfo(); });
+  sl.addEventListener("change",()=>{ if(currentType()!=="pCheck") generate(); });
+  num.addEventListener("input",()=>{
+    let v=parseInt(num.value); if(isNaN(v)) return;
+    v=Math.min(+num.max,Math.max(+num.min,v));
+    sl.value=v; updateWordInfo();
+  });
+  num.addEventListener("change",()=>{ if(currentType()!=="pCheck") generate(); });
+}
+bindPair("len","lenNum");
+bindPair("wcount","wcountNum");
+bindPair("tokLen","tokLenNum");
+bindPair("pinLen","pinLenNum");
+
+/* перегенерация при смене опций */
+$$(".panel input[type=checkbox], .panel select").forEach(el=>{
+  el.addEventListener("change",()=>{
+    updateWordInfo();
+    if(currentType()==="pCheck"){ renderAnalysis(analyze($("#checkInput").value)); return; }
+    if(el.id==="tokType"){
+      const pin=el.value==="pin";
+      $("#pinLenRow").style.display=pin?"flex":"none";
+      $("#tokLenRow").style.display=pin?"none":"flex";
+    }
+    generate();
+  });
+});
+$("#checkInput").oninput=e=>{ lastValue=e.target.value; lastType="Проверка"; $("#out").textContent=e.target.value||"—"; renderAnalysis(analyze(e.target.value)); };
+updateWordInfo();
+
+/* ---------- история (сессия) ---------- */
+const hist=[];
+function addHistory(val,type){
+  if(!val) return;
+  hist.unshift({val,type});
+  if(hist.length>30) hist.pop();
+  renderHist();
+}
+function renderHist(){
+  const c=$("#histCard"), l=$("#histList");
+  if(!hist.length){ c.style.display="none"; return; }
+  c.style.display="block"; l.innerHTML="";
+  for(const h of hist){
+    const d=document.createElement("div"); d.className="hist";
+    const t=document.createElement("span"); t.className="t"; t.textContent=h.type;
+    const code=document.createElement("code"); code.textContent=h.val; code.title="Копировать";
+    code.onclick=()=>copyText(h.val);
+    const del=document.createElement("button"); del.textContent="✕"; del.title="Удалить";
+    del.onclick=()=>{ hist.splice(hist.indexOf(h),1); renderHist(); };
+    d.append(t,code,del); l.appendChild(d);
+  }
+}
+$("#histClear").onclick=()=>{ hist.length=0; renderHist(); };
+
+/* ---------- буфер ---------- */
+async function copyText(t){
+  if(!t||t==="—"){ toast("Нечего копировать",true); return; }
+  try{ await navigator.clipboard.writeText(t); toast("Скопировано в буфер обмена"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove(); toast("Скопировано в буфер обмена");
+  }
+}
+let toastT;
+function toast(msg,isErr){ const t=$("#toast"); t.textContent=msg; t.classList.toggle("err",!!isErr); t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200); }
+
+/* ---------- PWA: манифест и иконки встроены в этот файл ---------- */
+(async()=>{
+  const mkIcon=size=>{
+    const c=document.createElement("canvas"); c.width=c.height=size;
+    const x=c.getContext("2d");
+    const g=x.createLinearGradient(0,0,size,size);
+    g.addColorStop(0,"#5b8cff"); g.addColorStop(.55,"#37d0a6"); g.addColorStop(1,"#a78bfa");
+    x.fillStyle=g; x.fillRect(0,0,size,size);
+    x.fillStyle="rgba(255,255,255,.92)"; x.beginPath(); x.arc(size/2,size*0.46,size*0.26,0,7); x.fill();
+    x.fillStyle="#5b8cff"; x.font=`800 ${size*0.19}px system-ui`; x.textAlign="center"; x.textBaseline="middle"; x.fillText("PF",size/2,size*0.46);
+    return c;
+  };
+  const toDataURL=c=>new Promise(res=>c.toBlob(b=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(b)},"image/png"));
+  try{
+    const i192=await toDataURL(mkIcon(192)), i512=await toDataURL(mkIcon(512)), i180=await toDataURL(mkIcon(180));
+    const manifest={
+      name:"PassForge — генератор паролей", short_name:"PassForge",
+      start_url:"./", scope:"./", display:"standalone",
+      background_color:"#0f1115", theme_color:"#5b8cff",
+      icons:[
+        {src:i192,sizes:"192x192",type:"image/png"},
+        {src:i512,sizes:"512x512",type:"image/png",purpose:"any maskable"}
+      ]
+    };
+    const l=document.createElement("link"); l.rel="manifest";
+    l.href="data:application/manifest+json;base64,"+btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
+    document.head.appendChild(l);
+    const ap=document.createElement("link"); ap.rel="apple-touch-icon"; ap.sizes="180x180"; ap.href=i180;
+    document.head.appendChild(ap);
+  }catch(e){}
+  const note=$("#pwaNote");
+  const set=t=>{ if(note) note.textContent=t; };
+  if(location.protocol==="file:"){ set(" • открыт как файл: манифест и иконки встроены в HTML — для установки на экран разместите файл на HTTPS-хостинге"); return; }
+  if(location.protocol.startsWith("http") && "serviceWorker" in navigator){
+    try{ await navigator.serviceWorker.register("sw.js"); set(" • PWA активен: установка и офлайн-кэш доступны"); }
+    catch(e){ set(" • манифест встроен — установка доступна; для авто-офлайн-кэша на хостинге положите рядом sw.js"); }
+  }
+})();
+
+generate();
+</script>
+</body>
+</html>
