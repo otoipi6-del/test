@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f1115">
 <title>PassForge — генератор паролей, названий и токенов</title>
+<link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='75%25' fx='50%25' fy='50%25'%3E%3Cstop offset='0%25' stop-color='%23FFFFFF'/%3E%3Cstop offset='32%25' stop-color='%23FFFFFF'/%3E%3Cstop offset='48%25' stop-color='%23D1FAE5'/%3E%3Cstop offset='58%25' stop-color='%23A7F3D0'/%3E%3Cstop offset='68%25' stop-color='%23D6CCF0'/%3E%3Cstop offset='84%25' stop-color='%23B9AAE0'/%3E%3Cstop offset='100%25' stop-color='%23A396CC'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='96' ry='96' fill='url(%23g)'/%3E%3Crect x='20' y='20' width='472' height='472' rx='76' ry='76' fill='none' stroke='%232C3E50' stroke-width='8'/%3E%3Ctext x='256' y='340' font-family='Arial, Helvetica, sans-serif' font-size='230' font-weight='700' fill='%235B4B8A' text-anchor='middle'%3EPF%3C/text%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
@@ -14,7 +16,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;min-height:100vh}
 header{display:flex;align-items:center;gap:12px;padding:18px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#14171e,transparent)}
-header .logo{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 200deg,#5b8cff,#37d0a6,#a78bfa,#5b8cff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b0d12;font-size:18px}
+header .logo{width:38px;height:38px;border-radius:10px;overflow:hidden;flex:0 0 auto;display:block}
+header .logo svg{width:100%;height:100%;display:block}
 header h1{font-size:20px;font-weight:700;letter-spacing:.3px}
 header p{color:var(--muted);font-size:13px}
 main{max-width:860px;margin:0 auto;padding:22px}
@@ -73,7 +76,30 @@ footer{text-align:center;color:var(--muted);font-size:12.5px;padding:20px}
 </head>
 <body>
 <header>
-  <div class="logo">PF</div>
+  <div class="logo" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="38" height="38" role="img" aria-label="PassForge">
+      <defs>
+        <radialGradient id="pfLogoBg" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="32%" stop-color="#FFFFFF"/>
+          <stop offset="48%" stop-color="#D1FAE5"/>
+          <stop offset="58%" stop-color="#A7F3D0"/>
+          <stop offset="68%" stop-color="#D6CCF0"/>
+          <stop offset="84%" stop-color="#B9AAE0"/>
+          <stop offset="100%" stop-color="#A396CC"/>
+        </radialGradient>
+      </defs>
+      <rect width="512" height="512" rx="96" ry="96" fill="url(#pfLogoBg)"/>
+      <rect x="20" y="20" width="472" height="472" rx="76" ry="76"
+            fill="none" stroke="#2C3E50" stroke-width="8"/>
+      <text x="256" y="340"
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="230"
+            font-weight="700"
+            fill="#5B4B8A"
+            text-anchor="middle" letter-spacing="0">PF</text>
+    </svg>
+  </div>
   <div>
     <h1>PassForge — генератор паролей, названий и токенов</h1>
     <p>Криптографический ГПСЧ браузера (crypto.getRandomValues). Ничего не отправляется и не сохраняется.</p>
@@ -596,42 +622,78 @@ async function copyText(t){
 let toastT;
 function toast(msg,isErr){ const t=$("#toast"); t.textContent=msg; t.classList.toggle("err",!!isErr); t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200); }
 
-/* ---------- PWA: манифест и иконки встроены в этот файл ---------- */
+/* ---------- PWA: манифест и SVG-иконки встроены в этот файл ---------- */
 (async()=>{
-  const mkIcon=size=>{
-    const c=document.createElement("canvas"); c.width=c.height=size;
-    const x=c.getContext("2d");
-    const g=x.createLinearGradient(0,0,size,size);
-    g.addColorStop(0,"#5b8cff"); g.addColorStop(.55,"#37d0a6"); g.addColorStop(1,"#a78bfa");
-    x.fillStyle=g; x.fillRect(0,0,size,size);
-    x.fillStyle="rgba(255,255,255,.92)"; x.beginPath(); x.arc(size/2,size*0.46,size*0.26,0,7); x.fill();
-    x.fillStyle="#5b8cff"; x.font=`800 ${size*0.19}px system-ui`; x.textAlign="center"; x.textBaseline="middle"; x.fillText("PF",size/2,size*0.46);
-    return c;
-  };
-  const toDataURL=c=>new Promise(res=>c.toBlob(b=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(b)},"image/png"));
+  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="32%"  stop-color="#FFFFFF"/>
+      <stop offset="48%"  stop-color="#D1FAE5"/>
+      <stop offset="58%"  stop-color="#A7F3D0"/>
+      <stop offset="68%"  stop-color="#D6CCF0"/>
+      <stop offset="84%"  stop-color="#B9AAE0"/>
+      <stop offset="100%" stop-color="#A396CC"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bgGradient)"/>
+  <rect x="20" y="20" width="472" height="472" rx="76" ry="76"
+        fill="none" stroke="#2C3E50" stroke-width="8"/>
+  <text x="256" y="340"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="230"
+        font-weight="700"
+        fill="#5B4B8A"
+        text-anchor="middle" letter-spacing="0">PF</text>
+</svg>`;
+
+  const svgURL = (function(){
+    const bytes = new TextEncoder().encode(svgIcon);
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    return "data:image/svg+xml;base64," + btoa(bin);
+  })();
+
   try{
-    const i192=await toDataURL(mkIcon(192)), i512=await toDataURL(mkIcon(512)), i180=await toDataURL(mkIcon(180));
-    const manifest={
-      name:"PassForge — генератор паролей", short_name:"PassForge",
-      start_url:"./", scope:"./", display:"standalone",
-      background_color:"#0f1115", theme_color:"#5b8cff",
-      icons:[
-        {src:i192,sizes:"192x192",type:"image/png"},
-        {src:i512,sizes:"512x512",type:"image/png",purpose:"any maskable"}
+    const manifest = {
+      name: "PassForge — генератор паролей",
+      short_name: "PassForge",
+      start_url: "./",
+      scope: "./",
+      display: "standalone",
+      background_color: "#0f1115",
+      theme_color: "#5b8cff",
+      icons: [
+        { src: svgURL, sizes: "any", type: "image/svg+xml", purpose: "any" },
+        { src: svgURL, sizes: "any", type: "image/svg+xml", purpose: "maskable" }
       ]
     };
-    const l=document.createElement("link"); l.rel="manifest";
-    l.href="data:application/manifest+json;base64,"+btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
+    const l = document.createElement("link");
+    l.rel = "manifest";
+    l.href = "data:application/manifest+json;base64," +
+             btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
     document.head.appendChild(l);
-    const ap=document.createElement("link"); ap.rel="apple-touch-icon"; ap.sizes="180x180"; ap.href=i180;
+
+    const ap = document.createElement("link");
+    ap.rel = "apple-touch-icon";
+    ap.sizes = "any";
+    ap.href = svgURL;
     document.head.appendChild(ap);
   }catch(e){}
-  const note=$("#pwaNote");
-  const set=t=>{ if(note) note.textContent=t; };
-  if(location.protocol==="file:"){ set(" • открыт как файл: манифест и иконки встроены в HTML — для установки на экран разместите файл на HTTPS-хостинге"); return; }
-  if(location.protocol.startsWith("http") && "serviceWorker" in navigator){
-    try{ await navigator.serviceWorker.register("sw.js"); set(" • PWA активен: установка и офлайн-кэш доступны"); }
-    catch(e){ set(" • манифест встроен — установка доступна; для авто-офлайн-кэша на хостинге положите рядом sw.js"); }
+
+  const note = $("#pwaNote");
+  const set = t => { if (note) note.textContent = t; };
+  if (location.protocol === "file:") {
+    set(" • открыт как файл: манифест и SVG-иконка встроены в HTML — для установки на экран разместите файл на HTTPS-хостинге");
+    return;
+  }
+  if (location.protocol.startsWith("http") && "serviceWorker" in navigator) {
+    try {
+      await navigator.serviceWorker.register("sw.js");
+      set(" • PWA активен: установка и офлайн-кэш доступны");
+    } catch (e) {
+      set(" • манифест встроен — установка доступна; для авто-офлайн-кэша на хостинге положите рядом sw.js");
+    }
   }
 })();
 
