@@ -622,39 +622,50 @@ async function copyText(t){
 let toastT;
 function toast(msg,isErr){ const t=$("#toast"); t.textContent=msg; t.classList.toggle("err",!!isErr); t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200); }
 
-/* ---------- PWA: манифест и SVG-иконки встроены в этот файл ---------- */
+/* ---------- PWA: манифест и иконки встроены в этот файл ---------- */
 (async()=>{
-  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <radialGradient id="bgGradient" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
-      <stop offset="0%"   stop-color="#FFFFFF"/>
-      <stop offset="32%"  stop-color="#FFFFFF"/>
-      <stop offset="48%"  stop-color="#D1FAE5"/>
-      <stop offset="58%"  stop-color="#A7F3D0"/>
-      <stop offset="68%"  stop-color="#D6CCF0"/>
-      <stop offset="84%"  stop-color="#B9AAE0"/>
-      <stop offset="100%" stop-color="#A396CC"/>
-    </radialGradient>
-  </defs>
-  <rect width="512" height="512" rx="96" ry="96" fill="url(#bgGradient)"/>
-  <rect x="20" y="20" width="472" height="472" rx="76" ry="76"
-        fill="none" stroke="#2C3E50" stroke-width="8"/>
-  <text x="256" y="340"
-        font-family="Arial, Helvetica, sans-serif"
-        font-size="230"
-        font-weight="700"
-        fill="#5B4B8A"
-        text-anchor="middle" letter-spacing="0">PF</text>
-</svg>`;
+  const mkIcon = size => {
+    const c = document.createElement("canvas"); c.width = c.height = size;
+    const x = c.getContext("2d");
+    const s = size / 512;
 
-  const svgURL = (function(){
-    const bytes = new TextEncoder().encode(svgIcon);
-    let bin = "";
-    for (const b of bytes) bin += String.fromCharCode(b);
-    return "data:image/svg+xml;base64," + btoa(bin);
-  })();
+    const g = x.createRadialGradient(256*s, 256*s, 0, 256*s, 256*s, 384*s);
+    g.addColorStop(0.00, "#FFFFFF");
+    g.addColorStop(0.32, "#FFFFFF");
+    g.addColorStop(0.48, "#D1FAE5");
+    g.addColorStop(0.58, "#A7F3D0");
+    g.addColorStop(0.68, "#D6CCF0");
+    g.addColorStop(0.84, "#B9AAE0");
+    g.addColorStop(1.00, "#A396CC");
+    roundRect(x, 0, 0, size, size, 96*s); x.fillStyle = g; x.fill();
+
+    roundRect(x, 20*s, 20*s, 472*s, 472*s, 76*s);
+    x.lineWidth = 8*s; x.strokeStyle = "#2C3E50"; x.stroke();
+
+    x.fillStyle = "#5B4B8A";
+    x.font = `700 ${230*s}px Arial, Helvetica, sans-serif`;
+    x.textAlign = "center"; x.textBaseline = "alphabetic";
+    x.fillText("PF", 256*s, 340*s);
+    return c;
+  };
+  function roundRect(ctx, x0, y0, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x0 + r, y0);
+    ctx.arcTo(x0 + w, y0,     x0 + w, y0 + h, r);
+    ctx.arcTo(x0 + w, y0 + h, x0,     y0 + h, r);
+    ctx.arcTo(x0,     y0 + h, x0,     y0,     r);
+    ctx.arcTo(x0,     y0,     x0 + w, y0,     r);
+    ctx.closePath();
+  }
+
+  const toDataURL = c => new Promise(res =>
+    c.toBlob(b => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); }, "image/png")
+  );
 
   try{
+    const i192 = await toDataURL(mkIcon(192));
+    const i512 = await toDataURL(mkIcon(512));
+    const i180 = await toDataURL(mkIcon(180));
     const manifest = {
       name: "PassForge — генератор паролей",
       short_name: "PassForge",
@@ -664,8 +675,9 @@ function toast(msg,isErr){ const t=$("#toast"); t.textContent=msg; t.classList.t
       background_color: "#0f1115",
       theme_color: "#5b8cff",
       icons: [
-        { src: svgURL, sizes: "any", type: "image/svg+xml", purpose: "any" },
-        { src: svgURL, sizes: "any", type: "image/svg+xml", purpose: "maskable" }
+        { src: i192, sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: i512, sizes: "512x512", type: "image/png", purpose: "any" },
+        { src: i512, sizes: "512x512", type: "image/png", purpose: "maskable" }
       ]
     };
     const l = document.createElement("link");
@@ -675,16 +687,14 @@ function toast(msg,isErr){ const t=$("#toast"); t.textContent=msg; t.classList.t
     document.head.appendChild(l);
 
     const ap = document.createElement("link");
-    ap.rel = "apple-touch-icon";
-    ap.sizes = "any";
-    ap.href = svgURL;
+    ap.rel = "apple-touch-icon"; ap.sizes = "180x180"; ap.href = i180;
     document.head.appendChild(ap);
   }catch(e){}
 
   const note = $("#pwaNote");
   const set = t => { if (note) note.textContent = t; };
   if (location.protocol === "file:") {
-    set(" • открыт как файл: манифест и SVG-иконка встроены в HTML — для установки на экран разместите файл на HTTPS-хостинге");
+    set(" • открыт как файл: манифест и иконки встроены в HTML — для установки на экран разместите файл на HTTPS-хостинге");
     return;
   }
   if (location.protocol.startsWith("http") && "serviceWorker" in navigator) {
