@@ -8,7 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Пасека Pro — Управление пасекой</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link id="appIcon" rel="apple-touch-icon" href="">
+    <link id="appFavicon" rel="icon" type="image/png" href="">
     <style>
         :root {
             --primary: #f5a623;
@@ -964,6 +965,278 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // === Генерация иконки через Canvas и установка её как apple-touch-icon / favicon ===
+        function generateAppIcon() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const S = size / 512;
+
+            // Фон с градиентом
+            const bgGrad = ctx.createRadialGradient(256 * S, 307 * S, 0, 256 * S, 307 * S, 384 * S);
+            bgGrad.addColorStop(0, '#FFFDF5');
+            bgGrad.addColorStop(0.18, '#FFFDF5');
+            bgGrad.addColorStop(0.38, '#FDEFC8');
+            bgGrad.addColorStop(0.60, '#F7D97A');
+            bgGrad.addColorStop(0.82, '#E8B23A');
+            bgGrad.addColorStop(1, '#C98A1E');
+
+            // Скруглённый прямоугольник фона
+            const r = 96 * S;
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+            ctx.save();
+            ctx.clip();
+
+            // Небо
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, 150 * S);
+            skyGrad.addColorStop(0, '#6FB7E8');
+            skyGrad.addColorStop(0.7, '#A8D4F0');
+            skyGrad.addColorStop(1, '#D6ECF9');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, size, 150 * S);
+
+            // Плавный переход неба в фон
+            const fadeGrad = ctx.createLinearGradient(0, 130 * S, 0, 190 * S);
+            fadeGrad.addColorStop(0, 'rgba(214,236,249,0)');
+            fadeGrad.addColorStop(1, 'rgba(214,236,249,0.9)');
+            ctx.fillStyle = fadeGrad;
+            ctx.fillRect(0, 130 * S, size, 60 * S);
+
+            // Облако
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            [[140, 62, 34, 18], [172, 56, 26, 16], [112, 58, 22, 13]].forEach(([x, y, rx, ry]) => {
+                ctx.beginPath();
+                ctx.ellipse(x * S, y * S, rx * S, ry * S, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Соты на фоне
+            ctx.strokeStyle = 'rgba(138,90,26,0.25)';
+            ctx.lineWidth = 6 * S;
+            const hexes = [
+                [256,90,300,115,300,165,256,190,212,165,212,115],
+                [344,140,388,165,388,215,344,240,300,215,300,165],
+                [168,140,212,165,212,215,168,240,124,215,124,165],
+                [256,190,300,215,300,265,256,290,212,265,212,215],
+                [344,240,388,265,388,315,344,340,300,315,300,265],
+                [168,240,212,265,212,315,168,340,124,315,124,265]
+            ];
+            hexes.forEach(pts => {
+                ctx.beginPath();
+                ctx.moveTo(pts[0] * S, pts[1] * S);
+                for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i] * S, pts[i + 1] * S);
+                ctx.closePath();
+                ctx.stroke();
+            });
+
+            // Тень под ульем
+            ctx.fillStyle = 'rgba(90,58,14,0.18)';
+            ctx.beginPath();
+            ctx.ellipse(256 * S, 424 * S, 110 * S, 18 * S, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Трава
+            ctx.strokeStyle = 'rgba(107,142,35,0.85)';
+            ctx.lineWidth = 10 * S;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(120 * S, 412 * S);
+            ctx.quadraticCurveTo(256 * S, 396 * S, 392 * S, 412 * S);
+            ctx.stroke();
+
+            // Улей — корпус
+            const hiveGrad = ctx.createLinearGradient(176 * S, 0, 336 * S, 0);
+            hiveGrad.addColorStop(0, '#F2C14E');
+            hiveGrad.addColorStop(0.5, '#FBE08A');
+            hiveGrad.addColorStop(1, '#D9A32E');
+            ctx.fillStyle = hiveGrad;
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 8 * S;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(196 * S, 400 * S);
+            ctx.bezierCurveTo(196 * S, 360 * S, 176 * S, 340 * S, 176 * S, 300 * S);
+            ctx.bezierCurveTo(176 * S, 270 * S, 200 * S, 250 * S, 256 * S, 250 * S);
+            ctx.bezierCurveTo(312 * S, 250 * S, 336 * S, 270 * S, 336 * S, 300 * S);
+            ctx.bezierCurveTo(336 * S, 340 * S, 316 * S, 360 * S, 316 * S, 400 * S);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Полоски улья
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 8 * S;
+            ctx.beginPath();
+            ctx.moveTo(188 * S, 320 * S);
+            ctx.quadraticCurveTo(256 * S, 340 * S, 324 * S, 320 * S);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(184 * S, 356 * S);
+            ctx.quadraticCurveTo(256 * S, 376 * S, 328 * S, 356 * S);
+            ctx.stroke();
+
+            // Леток
+            ctx.fillStyle = '#F7D97A';
+            ctx.strokeStyle = '#3B2410';
+            ctx.lineWidth = 5 * S;
+            ctx.beginPath();
+            ctx.ellipse(256 * S, 392 * S, 28 * S, 20 * S, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(59,36,16,0.85)';
+            ctx.beginPath();
+            ctx.ellipse(256 * S, 392 * S, 16 * S, 10 * S, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Крыша — треугольник
+            ctx.fillStyle = '#8A5A1A';
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 7 * S;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(156 * S, 250 * S);
+            ctx.lineTo(256 * S, 196 * S);
+            ctx.lineTo(356 * S, 250 * S);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Крыша — основание
+            ctx.fillStyle = '#A5711F';
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 6 * S;
+            const rr = 6 * S;
+            const rx = 150 * S, ry = 246 * S, rw = 212 * S, rh = 16 * S;
+            ctx.beginPath();
+            ctx.moveTo(rx + rr, ry);
+            ctx.lineTo(rx + rw - rr, ry);
+            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+            ctx.lineTo(rx + rw, ry + rh - rr);
+            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+            ctx.lineTo(rx + rr, ry + rh);
+            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+            ctx.lineTo(rx, ry + rr);
+            ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Блик на улье
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = 7 * S;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(206 * S, 300 * S);
+            ctx.quadraticCurveTo(214 * S, 330 * S, 210 * S, 360 * S);
+            ctx.stroke();
+
+            // Пчела — крылья
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 5 * S;
+            [[-28], [28]].forEach(([angle]) => {
+                ctx.save();
+                ctx.translate(390 * S, 200 * S);
+                ctx.rotate(angle * Math.PI / 180);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 34 * S, 18 * S, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // Тело пчелы
+            ctx.fillStyle = '#F2C14E';
+            ctx.strokeStyle = '#3B2410';
+            ctx.lineWidth = 6 * S;
+            ctx.beginPath();
+            ctx.ellipse(390 * S, 210 * S, 20 * S, 30 * S, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Полоски на теле
+            ctx.strokeStyle = '#3B2410';
+            ctx.lineWidth = 6 * S;
+            [[196, 204], [214, 222], [232, 238]].forEach(([y1, y2]) => {
+                ctx.beginPath();
+                ctx.moveTo(374 * S, y1 * S);
+                ctx.quadraticCurveTo(390 * S, y2 * S, 406 * S, y1 * S);
+                ctx.stroke();
+            });
+
+            // Голова
+            ctx.fillStyle = '#3B2410';
+            ctx.beginPath();
+            ctx.arc(390 * S, 180 * S, 12 * S, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Усики
+            ctx.strokeStyle = '#3B2410';
+            ctx.lineWidth = 4 * S;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(382 * S, 170 * S);
+            ctx.quadraticCurveTo(376 * S, 156 * S, 370 * S, 152 * S);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(398 * S, 170 * S);
+            ctx.quadraticCurveTo(404 * S, 156 * S, 410 * S, 152 * S);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // Рамка
+            ctx.strokeStyle = '#5A3A0E';
+            ctx.lineWidth = 8 * S;
+            ctx.beginPath();
+            const br = 76 * S;
+            const bx = 20 * S, by = 20 * S, bw = 472 * S, bh = 472 * S;
+            ctx.moveTo(bx + br, by);
+            ctx.lineTo(bx + bw - br, by);
+            ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+            ctx.lineTo(bx + bw, by + bh - br);
+            ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+            ctx.lineTo(bx + br, by + bh);
+            ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+            ctx.lineTo(bx, by + br);
+            ctx.quadraticCurveTo(bx, by, bx + br, by);
+            ctx.closePath();
+            ctx.stroke();
+
+            return canvas.toDataURL('image/png');
+        }
+
+        // Устанавливаем иконку сразу, до инициализации приложения
+        (function setAppIcon() {
+            try {
+                const dataUrl = generateAppIcon();
+                document.getElementById('appIcon').setAttribute('href', dataUrl);
+                document.getElementById('appFavicon').setAttribute('href', dataUrl);
+                // Также для Windows/Android мета
+                const appleMeta = document.createElement('link');
+                appleMeta.rel = 'apple-touch-icon';
+                appleMeta.sizes = '512x512';
+                appleMeta.href = dataUrl;
+                document.head.appendChild(appleMeta);
+            } catch (e) {
+                console.warn('Не удалось сгенерировать иконку:', e);
+            }
+        })();
+
         const app = {
             data: {
                 apiaries: [],
